@@ -3,3 +3,4 @@ mysql-connector-python
 openai==0.28
 python-pptx
 pillow
+python-dotenv
