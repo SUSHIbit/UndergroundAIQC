@@ -8,6 +8,7 @@ from ui.login_page import display_login_page
 from ui.menu_page import display_menu_page
 from ui.quiz_page import display_quiz_page
 from ui.challenge_page import display_challenge_page
+from ui.tournament_page import display_tournament_page
 
 # Load environment variables
 load_dotenv()
@@ -28,6 +29,8 @@ def main():
         st.session_state.questions = []
     if 'set_number' not in st.session_state:
         st.session_state.set_number = None
+    if 'tournament_data' not in st.session_state:
+        st.session_state.tournament_data = None
     
     # Apply custom CSS
     apply_custom_css()
@@ -41,6 +44,8 @@ def main():
         display_quiz_page()
     elif st.session_state.page == 'challenge':
         display_challenge_page()
+    elif st.session_state.page == 'tournament':
+        display_tournament_page()
 
 if __name__ == "__main__":
     main()
