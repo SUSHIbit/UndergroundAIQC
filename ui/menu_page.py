@@ -1,7 +1,6 @@
 import streamlit as st
 from ui.common import display_header, display_card
 from database.quiz_db import get_next_set_number
-from ui.tournament_page import display_tournament_page
 
 def handle_create_quiz():
     """Handle create quiz button click"""
@@ -15,12 +14,13 @@ def handle_create_challenge():
     st.session_state.set_number = get_next_set_number()
     st.rerun()
     
-# Add this function
 def handle_create_tournament():
     """Handle create tournament button click"""
     st.session_state.page = 'tournament'
+    st.session_state.tournament_type = None
+    st.session_state.tournament_data = None
+    st.session_state.show_ai_input = False
     st.rerun()
-
 
 def handle_logout():
     """Handle logout button click"""

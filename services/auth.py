@@ -1,49 +1,70 @@
 import streamlit as st
 from database.connection import get_db_connection
+import bcrypt
 
-def verify_password(stored_password, provided_password):
+def verify_password(stored_hash, provided_password):
     """
-    Verify a password against its hashed value from Laravel
+    Verify a bcrypt password hash against the provided password.
     
-    Note: In a production environment, use a proper Laravel-compatible 
-    password verification library
+    Args:
+        stored_hash (str): The bcrypt hash from the database
+        provided_password (str): The password provided during login
+    
+    Returns:
+        bool: True if the password matches, False otherwise
     """
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    
     try:
-        # Get the user by username
-        cursor.execute(
-            "SELECT * FROM users WHERE username = %s", 
-            (provided_password,)
-        )
-        return True
+        # Convert inputs to bytes
+        if isinstance(stored_hash, str):
+            stored_hash = stored_hash.encode('utf-8')
+        if isinstance(provided_password, str):
+            provided_password = provided_password.encode('utf-8')
+            
+        # Check if the stored_hash is a valid bcrypt hash format
+        if stored_hash.startswith(b'$2y$') or stored_hash.startswith(b'$2a$') or stored_hash.startswith(b'$2b$'):
+            # Verify password with bcrypt
+            return bcrypt.checkpw(provided_password, stored_hash)
+        else:
+            # Fall back to direct comparison for non-bcrypt passwords
+            return stored_hash == provided_password
     except Exception as e:
-        st.error(f"Authentication error: {e}")
+        st.error(f"Password verification error: {e}")
         return False
-    finally:
-        cursor.close()
-        conn.close()
 
 def authenticate_user(username, password):
     """
-    Authenticate a user and return their details if valid
+    Authenticate a user and return their details if valid.
+    Supports bcrypt hashed passwords from Laravel or other frameworks.
+    
+    Args:
+        username (str): The username to check
+        password (str): The password to verify
+    
+    Returns:
+        dict: User data if authentication succeeds, None otherwise
     """
     conn = get_db_connection()
+    if not conn:
+        st.error("Could not connect to database")
+        return None
+        
     cursor = conn.cursor(dictionary=True)
     
     try:
-        # Get the user by username
+        # Get the user by username only
         cursor.execute(
             "SELECT * FROM users WHERE username = %s", 
             (username,)
         )
         user = cursor.fetchone()
         
-        if user and user['role'] == 'lecturer':
-            # In a real implementation, you would need to use a proper Laravel-compatible 
-            # password verification function instead of this simplified approach
-            return user
+        if user:
+            # Verify the password against the stored hash
+            stored_password = user.get('password', '')
+            
+            if verify_password(stored_password, password) and user.get('role') == 'lecturer':
+                return user
+        
         return None
     except Exception as e:
         st.error(f"Authentication error: {e}")

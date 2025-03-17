@@ -8,6 +8,7 @@ def handle_back_to_menu():
     """Handle back to menu button click"""
     st.session_state.page = 'menu'
     st.session_state.tournament_data = None
+    st.session_state.tournament_type = None
     st.rerun()
 
 def parse_team_size(team_size_value):
@@ -41,59 +42,113 @@ def display_tournament_page():
     """Display the tournament creation page"""
     display_header("Create Tournament", "Design a competition for students")
     
-    # Initialize tournament data in session state if needed
+    # Initialize session state variables
     if 'tournament_data' not in st.session_state:
         st.session_state.tournament_data = None
     
-    # Add a flag to track if a tournament was just saved
     if 'tournament_saved' not in st.session_state:
         st.session_state.tournament_saved = False
-    
-    # Container for AI generation options
-    with st.container():
-        st.subheader("Generate Tournament Data")
         
-        col1, col2 = st.columns(2)
+    if 'tournament_type' not in st.session_state:
+        st.session_state.tournament_type = None
+        
+    if 'show_ai_input' not in st.session_state:
+        st.session_state.show_ai_input = False
+    
+    # Tournament type selection
+    if not st.session_state.tournament_type:
+        st.subheader("Select Tournament Type")
+        col1, col2, col3, col4, col5 = st.columns(5)
+        
         with col1:
-            if st.button("Generate with AI", key="generate_ai"):
-                st.session_state.show_ai_input = True
+            if st.button("Web Design", use_container_width=True):
+                st.session_state.tournament_type = "web_design"
+                st.rerun()
+                
+        with col2:
+            if st.button("Coup d'État", use_container_width=True):
+                st.session_state.tournament_type = "coup_detat"
+                st.rerun()
+                
+        with col3:
+            if st.button("Hackathon", use_container_width=True):
+                st.session_state.tournament_type = "hackathon"
+                st.rerun()
+                
+        with col4:
+            if st.button("Coding Competition", use_container_width=True):
+                st.session_state.tournament_type = "coding_competition"
+                st.rerun()
+                
+        with col5:
+            if st.button("Mobile", use_container_width=True):
+                st.session_state.tournament_type = "mobile"
+                st.rerun()
+    
+    # If a tournament type is selected, show the specific options
+    elif st.session_state.tournament_type and not st.session_state.tournament_saved:
+        st.subheader(f"{st.session_state.tournament_type.replace('_', ' ').title()} Tournament")
+        
+        # Options for creating a tournament
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("Create My Own Tournament", key="create_own", use_container_width=True):
+                # Initialize empty tournament data with the selected type
+                st.session_state.tournament_data = {"type": st.session_state.tournament_type, "title": "", "description": ""}
+                st.session_state.show_ai_input = False
+                st.rerun()
         
         with col2:
-            if st.button("Web Design Tournament", key="web_design"):
-                # Generate web design tournament
-                with st.spinner("Generating web design tournament..."):
-                    tournament_data = generate_web_design_tournament()
-                    st.session_state.tournament_data = tournament_data
-    
-    # Show AI input field if the button was clicked
-    if st.session_state.get('show_ai_input', False):
-        with st.expander("AI Generation", expanded=True):
-            tournament_description = st.text_area(
-                "Describe the tournament you want to create",
-                "A web design competition for university students where they need to redesign a website for a cat-themed company."
-            )
-            
-            if st.button("Generate", key="generate_with_description"):
-                with st.spinner("Generating tournament data with AI..."):
-                    tournament_data = generate_tournament_with_openai(tournament_description)
-                    st.session_state.tournament_data = tournament_data
-                    st.session_state.show_ai_input = False
+            if st.button("Generate with AI", key="generate_ai", use_container_width=True):
+                st.session_state.show_ai_input = True
+                st.rerun()
+        
+        # Show AI input field if the button was clicked
+        if st.session_state.show_ai_input:
+            with st.expander("AI Tournament Generator", expanded=True):
+                # Default prompts based on tournament type
+                default_prompts = {
+                    "web_design": "Generate a creative web design tournament about an innovative cat-themed startup.",
+                    "coup_detat": "Generate a strategic game tournament where players compete to take control of a fictional government.",
+                    "hackathon": "Generate a 24-hour coding marathon focused on solving climate change issues.",
+                    "coding_competition": "Generate a competitive programming contest with algorithmic challenges.",
+                    "mobile": "Generate a mobile app development competition focused on educational technology."
+                }
+                
+                tournament_description = st.text_area(
+                    "Describe the tournament you want to create",
+                    default_prompts.get(st.session_state.tournament_type, "Describe your tournament here.")
+                )
+                
+                if st.button("Generate Tournament", key="generate_with_description"):
+                    with st.spinner("Generating tournament data with AI..."):
+                        if st.session_state.tournament_type == "web_design":
+                            tournament_data = generate_tournament_with_openai(tournament_description)
+                            tournament_data["type"] = "web_design"
+                            st.session_state.tournament_data = tournament_data
+                            st.session_state.show_ai_input = False
+                            st.rerun()
     
     # Show success message and return button if tournament was just saved
     if st.session_state.tournament_saved:
         display_success_message("Tournament saved successfully!")
         if st.button("Return to Menu", key="return_after_save"):
             st.session_state.tournament_saved = False
+            st.session_state.tournament_type = None
             handle_back_to_menu()
     
-    # Only display the form if a tournament wasn't just saved
-    if not st.session_state.tournament_saved:
+    # Only display the form if a tournament type was selected and we have tournament data
+    if st.session_state.tournament_type and st.session_state.tournament_data and not st.session_state.tournament_saved:
         # Form for tournament details
         with st.form("tournament_form"):
-            # Get tournament data from session state or initialize empty values
-            tournament_data = st.session_state.tournament_data or {}
+            # Get tournament data from session state
+            tournament_data = st.session_state.tournament_data
             
             st.subheader("Tournament Details")
+            
+            # Tournament type display
+            st.markdown(f"**Tournament Type:** {st.session_state.tournament_type.replace('_', ' ').title()}")
             
             # Basic details
             title = st.text_input("Title", value=tournament_data.get("title", ""))
@@ -201,6 +256,6 @@ def display_tournament_page():
                         st.session_state.tournament_saved = True
                         st.rerun()  # Rerun to show success message outside the form
     
-    # Back button - outside the form
+    # Back button - always show this
     if st.button("Back to Menu", key="back_button"):
         handle_back_to_menu()
