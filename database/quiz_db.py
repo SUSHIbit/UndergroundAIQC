@@ -97,7 +97,8 @@ def get_quiz_sets():
     try:
         cursor.execute("""
             SELECT s.id, s.set_number, qd.subject_id, qd.topic_id, 
-                   sub.name as subject_name, t.name as topic_name
+                   sub.name as subject_name, t.name as topic_name,
+                   qd.timer_minutes
             FROM sets s
             JOIN quiz_details qd ON s.id = qd.set_id
             JOIN subjects sub ON qd.subject_id = sub.id
@@ -113,8 +114,20 @@ def get_quiz_sets():
         cursor.close()
         conn.close()
 
-def save_quiz(set_number, user_id, subject_id, topic_id, questions):
-    """Save a quiz to the database"""
+def save_quiz(set_number, user_id, subject_id, topic_id, questions, timer_minutes=None):
+    """Save a quiz to the database
+    
+    Args:
+        set_number (int): The quiz set number
+        user_id (int): The ID of the user creating the quiz
+        subject_id (int): The subject ID
+        topic_id (int): The topic ID
+        questions (list): List of question dictionaries
+        timer_minutes (int, optional): Time limit in minutes for the quiz
+    
+    Returns:
+        bool: Success status
+    """
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -126,10 +139,10 @@ def save_quiz(set_number, user_id, subject_id, topic_id, questions):
         )
         set_id = cursor.lastrowid
         
-        # Then, create the quiz details record
+        # Then, create the quiz details record with timer
         cursor.execute(
-            "INSERT INTO quiz_details (set_id, subject_id, topic_id) VALUES (%s, %s, %s)",
-            (set_id, subject_id, topic_id)
+            "INSERT INTO quiz_details (set_id, subject_id, topic_id, timer_minutes) VALUES (%s, %s, %s, %s)",
+            (set_id, subject_id, topic_id, timer_minutes)
         )
         
         # Finally, insert all questions
@@ -179,6 +192,32 @@ def get_quiz_questions(set_ids):
     except Exception as e:
         st.error(f"Error fetching quiz questions: {e}")
         return []
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_quiz_timer(set_id):
+    """Get the timer setting for a specific quiz set
+    
+    Args:
+        set_id (int): The quiz set ID
+        
+    Returns:
+        int or None: Timer minutes or None if not set
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute(
+            "SELECT timer_minutes FROM quiz_details WHERE set_id = %s", 
+            (set_id,)
+        )
+        result = cursor.fetchone()
+        return result[0] if result else None
+    except Exception as e:
+        st.error(f"Error fetching quiz timer: {e}")
+        return None
     finally:
         cursor.close()
         conn.close()

@@ -65,6 +65,29 @@ def display_quiz_page():
                     topic_id = t['id']
                     break
     
+    # Quiz timer setting
+    timer_minutes = None
+    if subject_id and topic_id:
+        st.subheader("Quiz Settings")
+        
+        # Timer options
+        col1, col2 = st.columns(2)
+        with col1:
+            enable_timer = st.checkbox("Enable Timer", value=False)
+        
+        with col2:
+            if enable_timer:
+                timer_minutes = st.number_input(
+                    "Time Limit (minutes)", 
+                    min_value=1, 
+                    max_value=180,  # 3 hours max
+                    value=30,  # Default 30 minutes
+                    step=5
+                )
+                st.info(f"Students will have {timer_minutes} minutes to complete this quiz.")
+            else:
+                st.info("No time limit will be applied to this quiz.")
+    
     # PowerPoint upload and processing
     if subject_id and topic_id:
         st.subheader("Upload PowerPoint Presentation")
@@ -128,7 +151,8 @@ def display_quiz_page():
                 st.session_state.user['id'],
                 subject_id, 
                 topic_id, 
-                edited_questions
+                edited_questions,
+                timer_minutes if enable_timer else None
             )
             
             if success:

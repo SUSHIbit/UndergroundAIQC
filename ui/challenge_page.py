@@ -18,6 +18,28 @@ def display_challenge_page():
     st.subheader("Challenge Name")
     challenge_name = st.text_input("Enter challenge name")
     
+    # Challenge timer setting
+    st.subheader("Challenge Settings")
+    
+    # Timer options
+    col1, col2 = st.columns(2)
+    with col1:
+        enable_timer = st.checkbox("Enable Timer", value=True)
+    
+    with col2:
+        if enable_timer:
+            timer_minutes = st.number_input(
+                "Time Limit (minutes)", 
+                min_value=1, 
+                max_value=180,  # 3 hours max
+                value=45,  # Default 45 minutes for challenges (harder than quizzes)
+                step=5
+            )
+            st.info(f"Students will have {timer_minutes} minutes to complete this challenge.")
+        else:
+            timer_minutes = None
+            st.info("No time limit will be applied to this challenge.")
+    
     # Prerequisite selection
     st.subheader("Select Prerequisites")
     st.write("Choose at least 2 prerequisite quiz sets:")
@@ -113,7 +135,8 @@ def display_challenge_page():
                     st.session_state.user['id'],
                     challenge_name, 
                     [s['id'] for s in selected_sets], 
-                    edited_questions
+                    edited_questions,
+                    timer_minutes if enable_timer else None
                 )
                 
                 if success:
