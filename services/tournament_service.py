@@ -4,42 +4,71 @@ from datetime import datetime, timedelta
 import random
 import json
 
-def generate_tournament_with_openai(description=""):
-    """
-    Generate tournament details using OpenAI GPT-3.5 Turbo
+def generate_tournament_with_openai(description="", tournament_type="web_design"):
+    """Generate tournament details using OpenAI GPT-3.5 Turbo
     
     Args:
         description (str): Optional user description for the tournament
-    
+        tournament_type (str): Type of tournament (web_design, hackathon, etc.)
+        
     Returns:
         dict: Tournament details
     """
     try:
-        # Default description for web design competition if not provided
+        # Default description for tournament types if not provided
         if not description:
-            description = "A web design competition for university students where they need to redesign a website for a fictional cat company."
+            if tournament_type == "web_design":
+                description = "A web design competition for university students where they need to redesign a website for a fictional cat company."
+            elif tournament_type == "hackathon":
+                description = "A 36-hour hackathon for university students focused on building innovative software solutions with specific required technologies."
+            else:
+                description = f"A {tournament_type.replace('_', ' ')} competition for university students."
+        
+        # Build prompt based on tournament type
+        if tournament_type == "hackathon":
+            prompt = f"""
+            Generate detailed information for a hackathon tournament for university students based on the following description:
+            {description}
             
-        prompt = f"""
-        Generate detailed information for a web design tournament for university students based on the following description:
-        {description}
-        
-        Please provide the following details in a structured format:
-        1. Title (creative and engaging)
-        2. Description (detailed, include the company or organization background and what they're looking for)
-        3. Date and Time (a future date)
-        4. Location (both virtual and a physical location at a university)
-        5. Eligibility requirements (who can participate)
-        6. Minimum rank required (choose from: Unranked, Bronze, Silver, Gold, Master, Grand Master, One Above All)
-        7. Team size (between 1-4)
-        8. Submission deadline (before the tournament date)
-        9. Tournament rules (detailed)
-        10. Judging criteria (be specific about design, usability, creativity, etc.)
-        11. Project submission guidelines (what needs to be submitted and how)
-        12. List of judges (3-5 judges with name and role)
-        
-        Be creative with the theme and make it engaging for university students. The title should be catchy and related to the theme.
-        Format the response as JSON to be easily parsed.
-        """
+            Please provide the following details in a structured format:
+            1. Title (creative and engaging, technical-sounding)
+            2. Description (detailed, include the technical challenge focus and goals)
+            3. Date and Time (a future date, specifically a 36-hour event)
+            4. Location (both virtual and a physical location at a university)
+            5. Eligibility requirements (who can participate)
+            6. Minimum rank required (choose from: Unranked, Bronze, Silver, Gold, Master, Grand Master, One Above All)
+            7. Team size (between 2-4)
+            8. Submission deadline (at the end of the 36-hour period)
+            9. Tournament rules (detailed, including REQUIRED tech stack specifications - must include at least one frontend framework, one backend framework, and one database technology)
+            10. Judging criteria (specific about technical complexity, code quality, innovation, scalability, and presentation)
+            11. Project submission guidelines (code repository, demo video, API documentation)
+            12. List of judges (4-5 judges with name and technical expertise role)
+            
+            The hackathon should be significantly more challenging than a web design competition, requiring integration of multiple technologies.
+            Format the response as JSON to be easily parsed.
+            """
+        else:  # Default to web_design or other types
+            prompt = f"""
+            Generate detailed information for a {tournament_type.replace('_', ' ')} tournament for university students based on the following description:
+            {description}
+            
+            Please provide the following details in a structured format:
+            1. Title (creative and engaging)
+            2. Description (detailed, include the company or organization background and what they're looking for)
+            3. Date and Time (a future date)
+            4. Location (both virtual and a physical location at a university)
+            5. Eligibility requirements (who can participate)
+            6. Minimum rank required (choose from: Unranked, Bronze, Silver, Gold, Master, Grand Master, One Above All)
+            7. Team size (between 1-4)
+            8. Submission deadline (before the tournament date)
+            9. Tournament rules (detailed)
+            10. Judging criteria (be specific based on the tournament type)
+            11. Project submission guidelines (what needs to be submitted and how)
+            12. List of judges (3-5 judges with name and role)
+            
+            Be creative with the theme and make it engaging for university students. The title should be catchy and related to the theme.
+            Format the response as JSON to be easily parsed.
+            """
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -70,12 +99,40 @@ def generate_tournament_with_openai(description=""):
             tournament_data = parse_tournament_response(response_text)
         
         # Ensure we have all the required fields
-        return ensure_tournament_fields(tournament_data)
+        return ensure_tournament_fields(tournament_data, tournament_type)
         
     except Exception as e:
         st.error(f"Error generating tournament: {e}")
         # Return default tournament data as fallback
-        return generate_default_tournament()
+        if tournament_type == "hackathon":
+            return generate_default_hackathon()
+        else:
+            return generate_default_tournament()
+        
+def generate_default_hackathon():
+    """Generate default hackathon tournament data as fallback"""
+    tournament_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
+    submission_deadline = (datetime.now() + timedelta(days=30, hours=36)).strftime("%Y-%m-%d %H:%M:%S")
+    
+    return {
+        "title": "TechFusion Hackathon Challenge",
+        "description": "Join our intensive 36-hour hackathon where teams will build innovative solutions to real-world problems. Participants will design and develop a full-stack application that demonstrates technical excellence and creative problem-solving. The focus is on creating solutions that are both technically impressive and practical.",
+        "date_time": tournament_date,
+        "location": "Virtual + University Innovation Hub",
+        "eligibility": "Open to all university students with programming experience. Participants should have basic knowledge of web development technologies and database concepts.",
+        "minimum_rank": "Silver",
+        "team_size": 3,
+        "deadline": submission_deadline,
+        "rules": "1. All code must be original and created during the hackathon period.\n2. Teams must use the following technologies:\n   - Frontend: React.js or Vue.js\n   - Backend: Node.js (Express) or Python (Django/Flask)\n   - Database: MongoDB or PostgreSQL\n3. Use of third-party libraries and APIs is permitted but must be disclosed.\n4. Teams must commit code regularly to their repository.\n5. Applications must include authentication and at least one external API integration.\n6. Solutions must be responsive and work across different devices.\n7. Code must follow best practices for security and performance.",
+        "judging_criteria": "1. Technical Complexity (25%): How sophisticated is the technical implementation?\n2. Innovation (20%): How original and creative is the solution?\n3. Functionality (20%): Does it work as intended with minimal bugs?\n4. Code Quality (15%): Is the code well-structured, documented, and maintainable?\n5. UI/UX Design (10%): Is the interface intuitive and visually appealing?\n6. Presentation (10%): How well did the team present their solution?",
+        "project_submission": "Teams must submit:\n1. GitHub repository link with complete source code and documentation.\n2. A 3-minute demo video showcasing the application.\n3. API documentation if applicable.\n4. A README.md file explaining the solution, technologies used, and setup instructions.\n5. A presentation slide deck (maximum 10 slides).",
+        "judges": [
+            {"name": "Dr. Rebecca Chen", "role": "Full Stack Development Lead"},
+            {"name": "Alex Patel", "role": "Senior Software Architect"},
+            {"name": "Maria Rodriguez", "role": "DevOps & Cloud Specialist"},
+            {"name": "Thomas Kim", "role": "Product Manager & UX Expert"}
+        ]
+    }
 
 def generate_creative_web_topics(count=3):
     """
@@ -234,9 +291,12 @@ def parse_tournament_response(response_text):
     
     return tournament_data
 
-def ensure_tournament_fields(tournament_data):
+def ensure_tournament_fields(tournament_data, tournament_type="web_design"):
     """Ensure all required fields are present in tournament data"""
-    default_tournament = generate_default_tournament()
+    if tournament_type == "hackathon":
+        default_tournament = generate_default_hackathon()
+    else:
+        default_tournament = generate_default_tournament()
     
     # Make sure all required fields exist
     for key in default_tournament:
@@ -279,8 +339,11 @@ def ensure_tournament_fields(tournament_data):
             # Try to parse the deadline
             deadline_str = tournament_data["deadline"]
             # Very flexible date parsing would go here
-            # For simplicity, we'll use a default date if parsing fails
-            tournament_data["deadline"] = (datetime.now() + timedelta(days=25)).strftime("%Y-%m-%d %H:%M:%S")
+            # For hackathons, set deadline 36 hours after the start date
+            if tournament_type == "hackathon":
+                tournament_data["deadline"] = (datetime.now() + timedelta(days=30, hours=36)).strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                tournament_data["deadline"] = (datetime.now() + timedelta(days=25)).strftime("%Y-%m-%d %H:%M:%S")
         except:
             tournament_data["deadline"] = default_tournament["deadline"]
     

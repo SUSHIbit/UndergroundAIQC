@@ -103,15 +103,15 @@ def display_tournament_page():
             if st.button("Generate with AI", key="generate_ai", use_container_width=True):
                 st.session_state.show_ai_input = True
                 st.rerun()
-        
+
         # Show AI input field if the button was clicked
         if st.session_state.show_ai_input:
             with st.expander("AI Tournament Generator", expanded=True):
                 # Default prompts based on tournament type
                 default_prompts = {
                     "web_design": "Generate a creative web design tournament about an innovative cat-themed startup.",
+                    "hackathon": "Generate a 36-hour hackathon focused on building a full-stack application with React frontend, Node.js backend, and MongoDB database.",
                     "coup_detat": "Generate a strategic game tournament where players compete to take control of a fictional government.",
-                    "hackathon": "Generate a 24-hour coding marathon focused on solving climate change issues.",
                     "coding_competition": "Generate a competitive programming contest with algorithmic challenges.",
                     "mobile": "Generate a mobile app development competition focused on educational technology."
                 }
@@ -123,12 +123,15 @@ def display_tournament_page():
                 
                 if st.button("Generate Tournament", key="generate_with_description"):
                     with st.spinner("Generating tournament data with AI..."):
-                        if st.session_state.tournament_type == "web_design":
-                            tournament_data = generate_tournament_with_openai(tournament_description)
-                            tournament_data["type"] = "web_design"
-                            st.session_state.tournament_data = tournament_data
-                            st.session_state.show_ai_input = False
-                            st.rerun()
+                        # Pass the tournament type to the generator function
+                        tournament_data = generate_tournament_with_openai(
+                            tournament_description, 
+                            st.session_state.tournament_type
+                        )
+                        tournament_data["type"] = st.session_state.tournament_type
+                        st.session_state.tournament_data = tournament_data
+                        st.session_state.show_ai_input = False
+                        st.rerun()
     
     # Show success message and return button if tournament was just saved
     if st.session_state.tournament_saved:
