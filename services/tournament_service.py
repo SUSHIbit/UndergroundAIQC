@@ -18,11 +18,11 @@ def generate_tournament_with_openai(description="", tournament_type="web_design"
         # Default description for tournament types if not provided
         if not description:
             if tournament_type == "web_design":
-                description = "A web design competition for university students where they need to redesign a website for a fictional cat company."
+                description = "A web design competition for a cat café that's struggling to attract customers and needs a fresh website to showcase their unique offerings."
             elif tournament_type == "hackathon":
-                description = "A 36-hour hackathon for university students focused on building innovative software solutions with specific required technologies."
+                description = "A local healthcare provider is seeking innovative solutions to help patients track their medication adherence and needs a 36-hour hackathon to develop prototypes."
             else:
-                description = f"A {tournament_type.replace('_', ' ')} competition for university students."
+                description = f"A company is looking for talented {tournament_type.replace('_', ' ')} developers to solve a pressing business challenge."
         
         # Build prompt based on tournament type
         if tournament_type == "hackathon":
@@ -32,9 +32,9 @@ def generate_tournament_with_openai(description="", tournament_type="web_design"
             
             Please provide the following details in a structured format:
             1. Title (creative and engaging, technical-sounding)
-            2. Description (detailed, include the technical challenge focus and goals)
+            2. Description (written from the POV of the company/organization with the problem - explain their situation, challenges, and what they hope students will create)
             3. Date and Time (a future date, specifically a 36-hour event)
-            4. Location (both virtual and a physical location at a university)
+            4. Location (provide a specific university building name and room number, not in JSON format, just plain text)
             5. Eligibility requirements (who can participate)
             6. Minimum rank required (choose from: Unranked, Bronze, Silver, Gold, Master, Grand Master, One Above All)
             7. Team size (between 2-4)
@@ -42,7 +42,6 @@ def generate_tournament_with_openai(description="", tournament_type="web_design"
             9. Tournament rules (detailed, including REQUIRED tech stack specifications - must include at least one frontend framework, one backend framework, and one database technology)
             10. Judging criteria (specific about technical complexity, code quality, innovation, scalability, and presentation)
             11. Project submission guidelines (code repository, demo video, API documentation)
-            12. List of judges (4-5 judges with name and technical expertise role)
             
             The hackathon should be significantly more challenging than a web design competition, requiring integration of multiple technologies.
             Format the response as JSON to be easily parsed.
@@ -54,9 +53,9 @@ def generate_tournament_with_openai(description="", tournament_type="web_design"
             
             Please provide the following details in a structured format:
             1. Title (creative and engaging)
-            2. Description (detailed, include the company or organization background and what they're looking for)
+            2. Description (written from the POV of the company/organization with the problem - explain their situation, challenges, and what they hope students will create)
             3. Date and Time (a future date)
-            4. Location (both virtual and a physical location at a university)
+            4. Location (provide a specific university building name and room number, not in JSON format, just plain text)
             5. Eligibility requirements (who can participate)
             6. Minimum rank required (choose from: Unranked, Bronze, Silver, Gold, Master, Grand Master, One Above All)
             7. Team size (between 1-4)
@@ -64,7 +63,6 @@ def generate_tournament_with_openai(description="", tournament_type="web_design"
             9. Tournament rules (detailed)
             10. Judging criteria (be specific based on the tournament type)
             11. Project submission guidelines (what needs to be submitted and how)
-            12. List of judges (3-5 judges with name and role)
             
             Be creative with the theme and make it engaging for university students. The title should be catchy and related to the theme.
             Format the response as JSON to be easily parsed.
@@ -98,16 +96,21 @@ def generate_tournament_with_openai(description="", tournament_type="web_design"
             # Fallback to manual parsing
             tournament_data = parse_tournament_response(response_text)
         
-        # Ensure we have all the required fields
+        # Ensure we have all the required fields and explicitly set the tournament type
+        tournament_data["tournament_type"] = tournament_type
         return ensure_tournament_fields(tournament_data, tournament_type)
         
     except Exception as e:
         st.error(f"Error generating tournament: {e}")
         # Return default tournament data as fallback
         if tournament_type == "hackathon":
-            return generate_default_hackathon()
+            default_data = generate_default_hackathon()
         else:
-            return generate_default_tournament()
+            default_data = generate_default_tournament()
+        
+        # Explicitly set the tournament type in the default data
+        default_data["tournament_type"] = tournament_type
+        return default_data
         
 def generate_default_hackathon():
     """Generate default hackathon tournament data as fallback"""
@@ -116,22 +119,35 @@ def generate_default_hackathon():
     
     return {
         "title": "TechFusion Hackathon Challenge",
-        "description": "Join our intensive 36-hour hackathon where teams will build innovative solutions to real-world problems. Participants will design and develop a full-stack application that demonstrates technical excellence and creative problem-solving. The focus is on creating solutions that are both technically impressive and practical.",
+        "description": "At HealthTrack Solutions, we're facing a critical challenge: patients are struggling to adhere to their medication schedules, resulting in decreased treatment effectiveness. As a growing health tech provider, we need an innovative app solution that patients can use to track, be reminded of, and report on their medication usage. We're hosting this 36-hour hackathon to find teams who can build a user-friendly solution that integrates with our existing systems. The winning team will have the opportunity to continue development with our company.",
         "date_time": tournament_date,
-        "location": "Virtual + University Innovation Hub",
+        "location": "Innovation Hub, University Technology Center, Room 301",
         "eligibility": "Open to all university students with programming experience. Participants should have basic knowledge of web development technologies and database concepts.",
         "minimum_rank": "Silver",
         "team_size": 3,
         "deadline": submission_deadline,
         "rules": "1. All code must be original and created during the hackathon period.\n2. Teams must use the following technologies:\n   - Frontend: React.js or Vue.js\n   - Backend: Node.js (Express) or Python (Django/Flask)\n   - Database: MongoDB or PostgreSQL\n3. Use of third-party libraries and APIs is permitted but must be disclosed.\n4. Teams must commit code regularly to their repository.\n5. Applications must include authentication and at least one external API integration.\n6. Solutions must be responsive and work across different devices.\n7. Code must follow best practices for security and performance.",
         "judging_criteria": "1. Technical Complexity (25%): How sophisticated is the technical implementation?\n2. Innovation (20%): How original and creative is the solution?\n3. Functionality (20%): Does it work as intended with minimal bugs?\n4. Code Quality (15%): Is the code well-structured, documented, and maintainable?\n5. UI/UX Design (10%): Is the interface intuitive and visually appealing?\n6. Presentation (10%): How well did the team present their solution?",
-        "project_submission": "Teams must submit:\n1. GitHub repository link with complete source code and documentation.\n2. A 3-minute demo video showcasing the application.\n3. API documentation if applicable.\n4. A README.md file explaining the solution, technologies used, and setup instructions.\n5. A presentation slide deck (maximum 10 slides).",
-        "judges": [
-            {"name": "Dr. Rebecca Chen", "role": "Full Stack Development Lead"},
-            {"name": "Alex Patel", "role": "Senior Software Architect"},
-            {"name": "Maria Rodriguez", "role": "DevOps & Cloud Specialist"},
-            {"name": "Thomas Kim", "role": "Product Manager & UX Expert"}
-        ]
+        "project_submission": "Teams must submit:\n1. GitHub repository link with complete source code and documentation.\n2. A 3-minute demo video showcasing the application.\n3. API documentation if applicable.\n4. A README.md file explaining the solution, technologies used, and setup instructions.\n5. A presentation slide deck (maximum 10 slides)."
+    }
+
+def generate_default_tournament():
+    """Generate default tournament data as fallback"""
+    tournament_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
+    submission_deadline = (datetime.now() + timedelta(days=25)).strftime("%Y-%m-%d %H:%M:%S")
+    
+    return {
+        "title": "Creative Web Design Challenge",
+        "description": "As the marketing director at WhiskerWonders, our cat café has been struggling with declining foot traffic. Our current website is outdated and fails to showcase the unique experience we offer to cat lovers. We need a fresh, engaging website that captures the cozy atmosphere of our café, highlights our rescue cats available for adoption, and makes our menu of cat-themed treats more appealing. We're looking for creative designers who can help us attract new customers and ultimately increase adoption rates for our rescue cats.",
+        "date_time": tournament_date,
+        "location": "Design School Auditorium, University Main Campus, Room 205",
+        "eligibility": "Open to all university students with an interest in web design and development. Participants must be currently enrolled in an undergraduate or graduate program.",
+        "minimum_rank": "Bronze",
+        "team_size": 3,
+        "deadline": submission_deadline,
+        "rules": "1. All submissions must be original work.\n2. Designs must be responsive and work on mobile devices.\n3. Submissions must include at least 5 pages (home, about, our cats, menu, and contact).\n4. Teams must use HTML, CSS, and JavaScript for their implementation.\n5. Use of frameworks and libraries is permitted.\n6. Submissions must be accessible and follow WCAG guidelines.\n7. All assets used must be original or properly licensed.",
+        "judging_criteria": "1. Visual Design (30%): Aesthetics, color scheme, typography, and overall visual appeal.\n2. User Experience (25%): Navigation, information architecture, and ease of use.\n3. Technical Implementation (20%): Code quality, performance, and proper implementation.\n4. Creativity (15%): Originality and innovative approach to the design challenge.\n5. Accessibility (10%): Compliance with accessibility standards.",
+        "project_submission": "Teams must submit:\n1. A GitHub repository with all source code.\n2. A working URL where the website is deployed.\n3. A brief (500 words max) design document explaining the concept and implementation.\n4. A 3-minute video walkthrough of the website highlighting key features."
     }
 
 def generate_creative_web_topics(count=3):
@@ -259,8 +275,7 @@ def parse_tournament_response(response_text):
         "deadline": ["deadline", "submission deadline"],
         "rules": ["rules", "tournament rules"],
         "judging_criteria": ["judging criteria"],
-        "project_submission": ["project submission", "submission guidelines"],
-        "judges": ["judges", "list of judges"]
+        "project_submission": ["project submission", "submission guidelines"]
     }
     
     for line in lines:
@@ -298,30 +313,13 @@ def ensure_tournament_fields(tournament_data, tournament_type="web_design"):
     else:
         default_tournament = generate_default_tournament()
     
+    # Explicitly set the tournament type
+    tournament_data["tournament_type"] = tournament_type
+    
     # Make sure all required fields exist
     for key in default_tournament:
         if key not in tournament_data or not tournament_data[key]:
             tournament_data[key] = default_tournament[key]
-    
-    # Special processing for judges
-    if isinstance(tournament_data["judges"], str):
-        # Convert string to list of dictionaries
-        judges_text = tournament_data["judges"]
-        judges = []
-        lines = judges_text.split('\n')
-        for line in lines:
-            if ':' in line:
-                parts = line.split(':', 1)
-                name = parts[0].strip()
-                role = parts[1].strip() if len(parts) > 1 else "Judge"
-                judges.append({"name": name, "role": role})
-            elif line.strip():
-                judges.append({"name": line.strip(), "role": "Judge"})
-        
-        if not judges:
-            judges = default_tournament["judges"]
-        
-        tournament_data["judges"] = judges
     
     # Special processing for dates
     if isinstance(tournament_data["date_time"], str):
@@ -349,31 +347,6 @@ def ensure_tournament_fields(tournament_data, tournament_type="web_design"):
     
     return tournament_data
 
-def generate_default_tournament():
-    """Generate default tournament data as fallback"""
-    tournament_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
-    submission_deadline = (datetime.now() + timedelta(days=25)).strftime("%Y-%m-%d %H:%M:%S")
-    
-    return {
-        "title": "Creative Web Design Challenge",
-        "description": "Join our Creative Web Design Challenge and showcase your skills in designing an innovative, user-friendly website that solves a real-world problem. This competition challenges university students to create a compelling web experience that demonstrates both technical proficiency and creative design thinking.",
-        "date_time": tournament_date,
-        "location": "Virtual event + University Main Auditorium",
-        "eligibility": "Open to all university students with an interest in web design and development. Participants must be currently enrolled in an undergraduate or graduate program.",
-        "minimum_rank": "Bronze",
-        "team_size": 3,
-        "deadline": submission_deadline,
-        "rules": "1. All submissions must be original work.\n2. Designs must be responsive and work on mobile devices.\n3. Submissions must include at least 5 pages (home, about, products/services, contact, and one additional page).\n4. Teams must use HTML, CSS, and JavaScript for their implementation.\n5. Use of frameworks and libraries is permitted.\n6. Submissions must be accessible and follow WCAG guidelines.\n7. All assets used must be original or properly licensed.",
-        "judging_criteria": "1. Visual Design (30%): Aesthetics, color scheme, typography, and overall visual appeal.\n2. User Experience (25%): Navigation, information architecture, and ease of use.\n3. Technical Implementation (20%): Code quality, performance, and proper implementation.\n4. Creativity (15%): Originality and innovative approach to the design challenge.\n5. Accessibility (10%): Compliance with accessibility standards.",
-        "project_submission": "Teams must submit:\n1. A GitHub repository with all source code.\n2. A working URL where the website is deployed.\n3. A brief (500 words max) design document explaining the concept and implementation.\n4. A 3-minute video walkthrough of the website highlighting key features.",
-        "judges": [
-            {"name": "Professor Emma Chen", "role": "Department of Design Head"},
-            {"name": "Michael Rodriguez", "role": "Senior UX Designer at TechCorp"},
-            {"name": "Sarah Patel", "role": "Frontend Development Expert"},
-            {"name": "Dr. James Wilson", "role": "Web Accessibility Specialist"}
-        ]
-    }
-
 def generate_web_design_tournament():
     """Generate a web design tournament with a creative theme"""
     # Get creative topics
@@ -390,9 +363,9 @@ def generate_web_design_tournament():
     
     return {
         "title": topic["title"],
-        "description": f"{topic['description']} This competition challenges participants to create a website for {topic['client']} with a focus on {topic['focus']}.",
+        "description": f"Our company, {topic['client'].split(',')[0]}, has been facing significant challenges with our online presence. {topic['description']} We're seeking talented student designers who can revolutionize our web presence with a focus on {topic['focus']}. The winning team will not only receive recognition but may have the opportunity to implement their design professionally.",
         "date_time": tournament_date,
-        "location": "Virtual event + University Design Lab",
+        "location": "Digital Arts Building, University Design Lab, Room 302",
         "eligibility": "Open to all university students studying web design, computer science, graphic design, or related fields.",
         "minimum_rank": "Bronze",
         "team_size": 2,
@@ -400,10 +373,5 @@ def generate_web_design_tournament():
         "rules": f"1. Create a complete responsive website focusing on {topic['focus']}.\n2. All code and design assets must be original or properly licensed.\n3. Website must include at least 5 main pages.\n4. Designs must be optimized for both desktop and mobile devices.\n5. Teams must use modern web technologies and follow best practices.",
         "judging_criteria": "1. Visual Design (30%): Brand alignment, aesthetics, and visual appeal.\n2. User Experience (25%): Intuitive navigation and overall usability.\n3. Technical Execution (20%): Code quality and performance.\n4. Creativity and Innovation (15%): Original ideas and unique approaches.\n5. Presentation (10%): How well the solution is presented and explained.",
         "project_submission": "Submit a GitHub repository link containing all code, a live demo URL, and a presentation PDF explaining your design choices.",
-        "judges": [
-            {"name": "Alex Morgan", "role": "Senior Web Designer"},
-            {"name": "Dr. Priya Sharma", "role": "Professor of Digital Media"},
-            {"name": "Jason Chen", "role": "UX Research Lead"},
-            {"name": "Olivia Thompson", "role": "Frontend Developer"}
-        ]
+        "tournament_type": "web_design"
     }
