@@ -3,7 +3,7 @@ import streamlit as st
 from database.connection import get_db_connection
 
 def get_judges():
-    """Get all users with judge role from the database
+    """Get all users with is_judge flag set to true
     
     Returns:
         list: List of judge user dictionaries
@@ -12,10 +12,11 @@ def get_judges():
     cursor = conn.cursor(dictionary=True)
     
     try:
+        # Updated to use is_judge flag instead of role
         cursor.execute(
             """SELECT id, name, username, email, profile_picture 
                FROM users 
-               WHERE role = 'judge'
+               WHERE is_judge = 1
                ORDER BY name"""
         )
         return cursor.fetchall()
@@ -26,7 +27,7 @@ def get_judges():
         cursor.close()
         conn.close()
 
-def save_tournament(user_id, title, description, date_time, location, eligibility, minimum_rank, team_size, deadline, rules, judging_criteria, project_submission, judge_ids, tournament_type="web_design"):
+def save_tournament(user_id, title, description, date_time, location, eligibility, minimum_rank, team_size, deadline, rules, judging_criteria, project_submission, judge_ids, rubrics, tournament_type="web_design"):
     """Save a tournament to the database
     
     Args:
@@ -43,11 +44,22 @@ def save_tournament(user_id, title, description, date_time, location, eligibilit
         judging_criteria (str): Judging criteria
         project_submission (str): Project submission guidelines
         judge_ids (list): List of user IDs for judges
+        rubrics (list): List of rubric dictionaries with title and score_weight
         tournament_type (str): Type of tournament (web_design, coup_detat, hackathon, etc.)
         
     Returns:
         bool: Success status
     """
+    # Validate rubrics before saving
+    is_valid, message, filtered_rubrics = validate_rubrics(rubrics)
+    if not is_valid:
+        st.error(message)
+        return False
+    
+    if not judge_ids:
+        st.error("Please select at least one judge.")
+        return False
+    
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -70,6 +82,13 @@ def save_tournament(user_id, title, description, date_time, location, eligibilit
                 (tournament_id, judge_id)
             )
         
+        # Add rubrics
+        for rubric in filtered_rubrics:
+            cursor.execute(
+                "INSERT INTO tournament_rubrics (tournament_id, title, score_weight) VALUES (%s, %s, %s)",
+                (tournament_id, rubric['title'], rubric['score_weight'])
+            )
+        
         conn.commit()
         return True
     except Exception as e:
@@ -79,6 +98,32 @@ def save_tournament(user_id, title, description, date_time, location, eligibilit
     finally:
         cursor.close()
         conn.close()
+
+def validate_rubrics(rubrics):
+    """Validate tournament rubrics
+    
+    Args:
+        rubrics (list): List of rubric dictionaries with title and score_weight
+        
+    Returns:
+        tuple: (is_valid, message, filtered_rubrics)
+    """
+    # Filter out empty rubrics
+    filtered_rubrics = []
+    for rubric in rubrics:
+        if rubric["title"].strip() and rubric["score_weight"] > 0:
+            filtered_rubrics.append(rubric)
+    
+    # Check if we have at least 3 valid rubrics
+    if len(filtered_rubrics) < 3:
+        return False, f"You must define at least 3 rubric items. Currently defined: {len(filtered_rubrics)}", filtered_rubrics
+    
+    # Check if weights sum to 100
+    total_weight = sum(rubric['score_weight'] for rubric in filtered_rubrics)
+    if total_weight != 100:
+        return False, f"The total weight of rubrics must be exactly 100%. Current total: {total_weight}%", filtered_rubrics
+    
+    return True, "Rubrics are valid.", filtered_rubrics
 
 def get_tournaments_by_type(tournament_type=None):
     """Get tournaments by type
@@ -123,6 +168,16 @@ def get_tournaments_by_type(tournament_type=None):
             )
             tournament['judges'] = cursor.fetchall()
             
+            # Fetch rubrics for each tournament
+            cursor.execute(
+                """SELECT id, title, score_weight
+                   FROM tournament_rubrics
+                   WHERE tournament_id = %s
+                   ORDER BY id""",
+                (tournament['id'],)
+            )
+            tournament['rubrics'] = cursor.fetchall()
+            
         return tournaments
     except Exception as e:
         st.error(f"Error fetching tournaments: {e}")
@@ -164,6 +219,16 @@ def get_tournament_by_id(tournament_id):
                 (tournament_id,)
             )
             tournament['judges'] = cursor.fetchall()
+            
+            # Fetch rubrics
+            cursor.execute(
+                """SELECT id, title, score_weight
+                   FROM tournament_rubrics
+                   WHERE tournament_id = %s
+                   ORDER BY id""",
+                (tournament_id,)
+            )
+            tournament['rubrics'] = cursor.fetchall()
             
         return tournament
     except Exception as e:

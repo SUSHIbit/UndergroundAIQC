@@ -375,3 +375,83 @@ def generate_web_design_tournament():
         "project_submission": "Submit a GitHub repository link containing all code, a live demo URL, and a presentation PDF explaining your design choices.",
         "tournament_type": "web_design"
     }
+    
+def generate_creative_prompt(tournament_type):
+    """Generate a creative prompt for tournament generation
+    
+    Args:
+        tournament_type (str): Type of tournament to generate a prompt for
+        
+    Returns:
+        str: A creative prompt
+    """
+    # Creative themes for different tournament types
+    web_design_themes = [
+        "Generate a creative web design tournament about a luxury pet hotel needing a website to showcase their premium services and attract high-end clientele.",
+        "Generate a creative web design tournament about a virtual reality arcade trying to build an immersive website that reflects their futuristic gaming experiences.",
+        "Generate a creative web design tournament about a sustainable fashion brand needing a website that highlights their eco-friendly practices and unique designs.",
+        "Generate a creative web design tournament about a historic bookstore with rare collections needing a website that balances classic aesthetics with modern functionality.",
+        "Generate a creative web design tournament about a food delivery service specialized in international cuisines needing a website to showcase global flavors.",
+        "Generate a creative web design tournament about a space tourism company needing a website to attract adventurous travelers for their upcoming orbital flights.",
+        "Generate a creative web design tournament about a music festival needing a dynamic website to promote their lineup of artists and sell tickets.",
+        "Generate a creative web design tournament about an underwater photography gallery needing a website that captures the beauty of marine life.",
+        "Generate a creative web design tournament about a smart home technology company needing a website that demonstrates their innovative products.",
+        "Generate a creative web design tournament about a community garden organization needing a website to attract volunteers and share gardening resources."
+    ]
+    
+    hackathon_themes = [
+        "Generate a 36-hour hackathon focused on creating solutions for disaster response and emergency management systems.",
+        "Generate a 36-hour hackathon focused on developing educational technology for children with learning disabilities.",
+        "Generate a 36-hour hackathon focused on creating financial technology solutions for underbanked communities.",
+        "Generate a 36-hour hackathon focused on building sustainable smart city infrastructure and monitoring systems.",
+        "Generate a 36-hour hackathon focused on developing mental health support applications and resources.",
+        "Generate a 36-hour hackathon focused on creating accessibility tools for people with disabilities.",
+        "Generate a 36-hour hackathon focused on developing AI-powered agriculture solutions for small farms.",
+        "Generate a 36-hour hackathon focused on creating privacy-focused alternatives to mainstream tech products.",
+        "Generate a 36-hour hackathon focused on developing telehealth solutions for rural communities.",
+        "Generate a 36-hour hackathon focused on creating augmented reality applications for industrial training."
+    ]
+    
+    mobile_themes = [
+        "Generate a mobile app development competition focused on health monitoring and wellness tracking.",
+        "Generate a mobile app development competition focused on location-based augmented reality games.",
+        "Generate a mobile app development competition focused on personal finance management and financial literacy.",
+        "Generate a mobile app development competition focused on language learning and cultural exchange.",
+        "Generate a mobile app development competition focused on community volunteering and social impact.",
+        "Generate a mobile app development competition focused on sustainable living and carbon footprint reduction.",
+        "Generate a mobile app development competition focused on collaborative music creation and sharing.",
+        "Generate a mobile app development competition focused on mental health support and mindfulness.",
+        "Generate a mobile app development competition focused on accessible navigation for people with disabilities.",
+        "Generate a mobile app development competition focused on local tourism and hidden gem discovery."
+    ]
+    
+    coding_themes = [
+        "Generate a competitive programming contest focused on algorithm optimization for renewable energy systems.",
+        "Generate a competitive programming contest focused on machine learning challenges for medical diagnosis.",
+        "Generate a competitive programming contest focused on natural language processing for multilingual communication.",
+        "Generate a competitive programming contest focused on computer vision for wildlife conservation.",
+        "Generate a competitive programming contest focused on blockchain solutions for supply chain transparency.",
+        "Generate a competitive programming contest focused on quantum computing algorithm simulation.",
+        "Generate a competitive programming contest focused on cybersecurity challenges and ethical hacking.",
+        "Generate a competitive programming contest focused on data analysis for climate change research.",
+        "Generate a competitive programming contest focused on game AI development and strategy optimization.",
+        "Generate a competitive programming contest focused on robotics control systems and automation."
+    ]
+    
+    # Select themes based on tournament type
+    if tournament_type == "web_design":
+        themes = web_design_themes
+    elif tournament_type == "hackathon":
+        themes = hackathon_themes
+    elif tournament_type == "mobile":
+        themes = mobile_themes
+    elif tournament_type == "coding_competition":
+        themes = coding_themes
+    else:
+        # For other types, use a mix of themes
+        import random
+        themes = random.sample(web_design_themes, 3) + random.sample(hackathon_themes, 3) + random.sample(mobile_themes, 2)
+    
+    # Return a random theme
+    import random
+    return random.choice(themes)
