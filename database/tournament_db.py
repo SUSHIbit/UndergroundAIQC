@@ -27,7 +27,7 @@ def get_judges():
         cursor.close()
         conn.close()
 
-def save_tournament(user_id, title, description, date_time, location, eligibility, minimum_rank, team_size, deadline, rules, judging_criteria, project_submission, judge_ids, rubrics, tournament_type="web_design"):
+def save_tournament(user_id, title, description, date_time, location, eligibility, minimum_rank, team_size, deadline, rules, judging_criteria, project_submission, judge_ids, rubrics, tournament_type="web_design", judging_date=None):
     """Save a tournament to the database
     
     Args:
@@ -46,6 +46,7 @@ def save_tournament(user_id, title, description, date_time, location, eligibilit
         judge_ids (list): List of user IDs for judges
         rubrics (list): List of rubric dictionaries with title and score_weight
         tournament_type (str): Type of tournament (web_design, coup_detat, hackathon, etc.)
+        judging_date (str): Date and time when judging begins
         
     Returns:
         bool: Success status
@@ -68,10 +69,10 @@ def save_tournament(user_id, title, description, date_time, location, eligibilit
         cursor.execute(
             """INSERT INTO tournaments 
                (title, description, date_time, location, eligibility, minimum_rank, team_size, deadline, 
-               rules, judging_criteria, project_submission, created_by, status, tournament_type) 
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+               rules, judging_criteria, project_submission, created_by, status, tournament_type, judging_date) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
             (title, description, date_time, location, eligibility, minimum_rank, team_size, deadline, 
-             rules, judging_criteria, project_submission, user_id, 'draft', tournament_type)
+             rules, judging_criteria, project_submission, user_id, 'draft', tournament_type, judging_date)
         )
         tournament_id = cursor.lastrowid
         

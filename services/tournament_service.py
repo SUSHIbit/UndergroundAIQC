@@ -116,6 +116,7 @@ def generate_default_hackathon():
     """Generate default hackathon tournament data as fallback"""
     tournament_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
     submission_deadline = (datetime.now() + timedelta(days=30, hours=36)).strftime("%Y-%m-%d %H:%M:%S")
+    judging_date = (datetime.now() + timedelta(days=31, hours=12)).strftime("%Y-%m-%d %H:%M:%S")
     
     return {
         "title": "TechFusion Hackathon Challenge",
@@ -126,6 +127,7 @@ def generate_default_hackathon():
         "minimum_rank": "Silver",
         "team_size": 3,
         "deadline": submission_deadline,
+        "judging_date": judging_date,
         "rules": "1. All code must be original and created during the hackathon period.\n2. Teams must use the following technologies:\n   - Frontend: React.js or Vue.js\n   - Backend: Node.js (Express) or Python (Django/Flask)\n   - Database: MongoDB or PostgreSQL\n3. Use of third-party libraries and APIs is permitted but must be disclosed.\n4. Teams must commit code regularly to their repository.\n5. Applications must include authentication and at least one external API integration.\n6. Solutions must be responsive and work across different devices.\n7. Code must follow best practices for security and performance.",
         "judging_criteria": "1. Technical Complexity (25%): How sophisticated is the technical implementation?\n2. Innovation (20%): How original and creative is the solution?\n3. Functionality (20%): Does it work as intended with minimal bugs?\n4. Code Quality (15%): Is the code well-structured, documented, and maintainable?\n5. UI/UX Design (10%): Is the interface intuitive and visually appealing?\n6. Presentation (10%): How well did the team present their solution?",
         "project_submission": "Teams must submit:\n1. GitHub repository link with complete source code and documentation.\n2. A 3-minute demo video showcasing the application.\n3. API documentation if applicable.\n4. A README.md file explaining the solution, technologies used, and setup instructions.\n5. A presentation slide deck (maximum 10 slides)."
@@ -135,6 +137,7 @@ def generate_default_tournament():
     """Generate default tournament data as fallback"""
     tournament_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
     submission_deadline = (datetime.now() + timedelta(days=25)).strftime("%Y-%m-%d %H:%M:%S")
+    judging_date = (datetime.now() + timedelta(days=26)).strftime("%Y-%m-%d %H:%M:%S")
     
     return {
         "title": "Creative Web Design Challenge",
@@ -145,6 +148,7 @@ def generate_default_tournament():
         "minimum_rank": "Bronze",
         "team_size": 3,
         "deadline": submission_deadline,
+        "judging_date": judging_date,
         "rules": "1. All submissions must be original work.\n2. Designs must be responsive and work on mobile devices.\n3. Submissions must include at least 5 pages (home, about, our cats, menu, and contact).\n4. Teams must use HTML, CSS, and JavaScript for their implementation.\n5. Use of frameworks and libraries is permitted.\n6. Submissions must be accessible and follow WCAG guidelines.\n7. All assets used must be original or properly licensed.",
         "judging_criteria": "1. Visual Design (30%): Aesthetics, color scheme, typography, and overall visual appeal.\n2. User Experience (25%): Navigation, information architecture, and ease of use.\n3. Technical Implementation (20%): Code quality, performance, and proper implementation.\n4. Creativity (15%): Originality and innovative approach to the design challenge.\n5. Accessibility (10%): Compliance with accessibility standards.",
         "project_submission": "Teams must submit:\n1. A GitHub repository with all source code.\n2. A working URL where the website is deployed.\n3. A brief (500 words max) design document explaining the concept and implementation.\n4. A 3-minute video walkthrough of the website highlighting key features."
@@ -344,6 +348,18 @@ def ensure_tournament_fields(tournament_data, tournament_type="web_design"):
                 tournament_data["deadline"] = (datetime.now() + timedelta(days=25)).strftime("%Y-%m-%d %H:%M:%S")
         except:
             tournament_data["deadline"] = default_tournament["deadline"]
+    
+    # Set judging date to one day after the deadline if not provided
+    if "judging_date" not in tournament_data or not tournament_data["judging_date"]:
+        try:
+            deadline_date = datetime.strptime(tournament_data["deadline"], "%Y-%m-%d %H:%M:%S")
+            tournament_data["judging_date"] = (deadline_date + timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
+        except:
+            # Default to one day after the deadline
+            if tournament_type == "hackathon":
+                tournament_data["judging_date"] = (datetime.now() + timedelta(days=31, hours=12)).strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                tournament_data["judging_date"] = (datetime.now() + timedelta(days=26)).strftime("%Y-%m-%d %H:%M:%S")
     
     return tournament_data
 

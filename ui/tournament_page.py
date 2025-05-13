@@ -295,6 +295,21 @@ def display_tournament_page():
             deadline_date = st.date_input("Submission Deadline Date", value=deadline_obj)
             deadline_time = st.time_input("Submission Deadline Time", value=datetime.strptime("23:59:59", "%H:%M:%S").time())
             
+            # Add Judging Date - NEW FIELD
+            judging_default = deadline_obj + timedelta(days=1)  # Default to one day after submission deadline
+            judging_date_str = tournament_data.get("judging_date", judging_default.strftime("%Y-%m-%d %H:%M:%S"))
+            try:
+                if isinstance(judging_date_str, str):
+                    judging_date_obj = datetime.strptime(judging_date_str, "%Y-%m-%d %H:%M:%S")
+                else:
+                    judging_date_obj = judging_default
+            except:
+                judging_date_obj = judging_default
+                
+            judging_date = st.date_input("Judging Date", value=judging_date_obj, 
+                                         help="Date when judging will begin. Must be on or after the submission deadline.")
+            judging_time = st.time_input("Judging Time", value=datetime.strptime("10:00:00", "%H:%M:%S").time())
+            
             # Rules field
             rules = st.text_area("Rules", value=tournament_data.get("rules", ""))
             
@@ -407,12 +422,15 @@ def display_tournament_page():
                 # Combine date and time
                 date_time_combined = datetime.combine(date_time, time).strftime("%Y-%m-%d %H:%M:%S")
                 deadline_combined = datetime.combine(deadline_date, deadline_time).strftime("%Y-%m-%d %H:%M:%S")
+                judging_date_combined = datetime.combine(judging_date, judging_time).strftime("%Y-%m-%d %H:%M:%S")
                 
                 # Validate form
                 if not title or not description:
                     st.error("Please fill in all required fields.")
                 elif not selected_judges:
                     st.error("Please select at least one judge.")
+                elif judging_date < deadline_date:
+                    st.error("Judging date must be on or after the submission deadline.")
                 else:
                     # Validate rubrics
                     is_valid, message, filtered_rubrics = validate_rubrics(st.session_state.rubrics)
@@ -436,7 +454,8 @@ def display_tournament_page():
                             project_submission,
                             selected_judges,
                             filtered_rubrics,  # Pass the validated rubrics
-                            tournament_type=st.session_state.tournament_type
+                            tournament_type=st.session_state.tournament_type,
+                            judging_date=judging_date_combined  # Add the new judging date field
                         )
                         
                         if success:
