@@ -10,7 +10,7 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 openai.api_key = OPENAI_API_KEY
 
-def generate_questions_with_openai(content, question_type="quiz", bloom_level=None):
+def generate_questions_with_openai(content, question_type="quiz", bloom_level=None, question_count=10):
     """
     Generate questions using OpenAI based on the slide content
     
@@ -18,6 +18,7 @@ def generate_questions_with_openai(content, question_type="quiz", bloom_level=No
         content (str): The slide content to generate questions from
         question_type (str): Type of questions to generate ("quiz", "challenge", or "tournament")
         bloom_level (str, optional): Bloom's Taxonomy level to use for generation
+        question_count (int, optional): Number of questions to generate (default: 10)
         
     Returns:
         list: List of question dictionaries
@@ -32,39 +33,41 @@ def generate_questions_with_openai(content, question_type="quiz", bloom_level=No
             elif question_type == "tournament":
                 bloom_level = "Create"
         
-        return generate_blooms_taxonomy_questions(content, bloom_level)
+        return generate_blooms_taxonomy_questions(content, bloom_level, question_count)
     
     except Exception as e:
         st.error(f"Error generating questions: {e}")
         return []
 
-def generate_blooms_taxonomy_questions(content, bloom_level):
+def generate_blooms_taxonomy_questions(content, bloom_level, question_count=10):
     """
     Generate questions using specific Bloom's Taxonomy level
     
     Args:
         content (str): The slide content to generate questions from
         bloom_level (str): Bloom's Taxonomy level
+        question_count (int): Number of questions to generate
     
     Returns:
         list: List of question dictionaries
     """
     try:
-        # Generate 10 questions for the specified Bloom's level
-        questions = generate_questions_for_bloom_level(content, bloom_level)
+        # Generate the specified number of questions for the Bloom's level
+        questions = generate_questions_for_bloom_level(content, bloom_level, question_count)
         return questions
     
     except Exception as e:
         st.error(f"Error generating questions for Bloom's level {bloom_level}: {e}")
         return []
 
-def generate_questions_for_bloom_level(content, bloom_level):
+def generate_questions_for_bloom_level(content, bloom_level, question_count=10):
     """
     Generate questions for a specific Bloom's Taxonomy level
     
     Args:
         content (str): The slide content to generate questions from
         bloom_level (str): The Bloom's Taxonomy level
+        question_count (int): Number of questions to generate
     
     Returns:
         list: List of question dictionaries
@@ -81,7 +84,7 @@ def generate_questions_for_bloom_level(content, bloom_level):
     
     # Craft the prompt with the appropriate Bloom's level description
     prompt = f"""
-    Based on the following content, generate 10 multiple-choice questions at the "{bloom_level}" level of Bloom's Taxonomy.
+    Based on the following content, generate {question_count} multiple-choice questions at the "{bloom_level}" level of Bloom's Taxonomy.
     
     {level_descriptions[bloom_level]}
     
@@ -103,21 +106,42 @@ def generate_questions_for_bloom_level(content, bloom_level):
     {content}
     """
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": f"You are an educational assistant that creates accurate multiple-choice questions based on content. You specialize in creating questions at the {bloom_level} level of Bloom's Taxonomy."},
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=3000,
-        temperature=0.7
-    )
+    # For larger question counts, we may need multiple API calls
+    all_questions = []
+    remaining_questions = question_count
     
-    response_text = response.choices[0].message.content
+    while remaining_questions > 0:
+        batch_size = min(remaining_questions, 10)  # Process in batches of up to 10 questions
+        
+        batch_prompt = prompt
+        if batch_size < question_count:
+            # Update prompt to request the specific batch size
+            batch_prompt = batch_prompt.replace(f"generate {question_count} multiple-choice", f"generate {batch_size} multiple-choice")
+        
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": f"You are an educational assistant that creates accurate multiple-choice questions based on content. You specialize in creating questions at the {bloom_level} level of Bloom's Taxonomy."},
+                {"role": "user", "content": batch_prompt}
+            ],
+            max_tokens=3000,
+            temperature=0.7
+        )
+        
+        response_text = response.choices[0].message.content
+        
+        # Process response into structured questions
+        batch_questions = parse_openai_response(response_text, bloom_level)
+        all_questions.extend(batch_questions)
+        
+        # Update remaining questions count
+        remaining_questions -= len(batch_questions)
+        
+        # If we didn't get as many questions as expected in this batch, break to avoid infinite loop
+        if len(batch_questions) == 0:
+            break
     
-    # Process response into structured questions
-    questions = parse_openai_response(response_text, bloom_level)
-    return questions
+    return all_questions
 
 def parse_openai_response(response_text, bloom_level=None):
     """

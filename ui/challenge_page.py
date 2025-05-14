@@ -80,7 +80,7 @@ def display_challenge_page():
                     st.markdown("---")
             
             # Generate harder questions at Evaluate level
-            if st.button("Generate Evaluate-Level Questions"):
+            if st.button("Generate 30 Evaluate-Level Questions"):
                 # Combine questions for context
                 context = ""
                 for q in prerequisite_questions:
@@ -90,14 +90,15 @@ def display_challenge_page():
                     context += f"Answer: {q['correct_answer']}\n"
                     context += f"Reason: {q['reason']}\n\n"
                 
-                with st.spinner("Generating 'Evaluate' level questions based on prerequisites..."):
+                with st.spinner("Generating 30 'Evaluate' level questions based on prerequisites..."):
                     st.session_state.questions = generate_questions_with_openai(
                         context, 
                         question_type="challenge",
-                        bloom_level="Evaluate"
+                        bloom_level="Evaluate",
+                        question_count=30
                     )
                     if st.session_state.questions:
-                        st.success("Challenge questions generated successfully!")
+                        st.success(f"{len(st.session_state.questions)} Evaluate-level challenge questions generated successfully!")
         else:
             st.warning("Could not find questions for the selected prerequisite sets.")
     
