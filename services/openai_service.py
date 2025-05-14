@@ -10,94 +10,52 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 openai.api_key = OPENAI_API_KEY
 
-def generate_questions_with_openai(content, question_type="quiz", difficulty_level=None):
+def generate_questions_with_openai(content, question_type="quiz", bloom_level=None):
     """
     Generate questions using OpenAI based on the slide content
     
     Args:
         content (str): The slide content to generate questions from
-        question_type (str): Type of questions to generate ("quiz" or "challenge")
-        difficulty_level (str, optional): Difficulty level ("Diploma" or "Degree")
-    
+        question_type (str): Type of questions to generate ("quiz", "challenge", or "tournament")
+        bloom_level (str, optional): Bloom's Taxonomy level to use for generation
+        
     Returns:
         list: List of question dictionaries
     """
     try:
-        # If difficulty level is specified, use Bloom's Taxonomy for quiz generation
-        if question_type == "quiz" and difficulty_level:
-            return generate_blooms_taxonomy_questions(content, difficulty_level)
+        # Map question types to default Bloom's levels if not specified
+        if not bloom_level:
+            if question_type == "quiz":
+                bloom_level = "Analyze"
+            elif question_type == "challenge":
+                bloom_level = "Evaluate"
+            elif question_type == "tournament":
+                bloom_level = "Create"
         
-        # Default behavior (original functionality)
-        difficulty = "standard" if question_type == "quiz" else "challenging"
-        
-        prompt = f"""
-        Based on the following lecture slide content, generate 10 multiple-choice questions at a {difficulty} difficulty level.
-        Each question should have 4 options (A, B, C, D) with only one correct answer.
-        For each question, also provide:
-        1. The correct answer letter
-        2. A brief explanation for why that answer is correct
-        
-        Format each question as follows:
-        Question 1: [Question text]
-        Options: A: [Option A], B: [Option B], C: [Option C], D: [Option D]
-        Answer: [Correct answer letter]
-        Reason: [Explanation]
-        
-        Only use information explicitly stated in the content. Do not make up information.
-        
-        Content:
-        {content}
-        """
-
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are an educational assistant that creates accurate multiple-choice questions based on lecture content."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=3000,
-            temperature=0.7
-        )
-        
-        response_text = response.choices[0].message.content
-        
-        # Process response into structured questions
-        questions = parse_openai_response(response_text)
-        return questions
+        return generate_blooms_taxonomy_questions(content, bloom_level)
     
     except Exception as e:
         st.error(f"Error generating questions: {e}")
         return []
 
-def generate_blooms_taxonomy_questions(content, difficulty_level):
+def generate_blooms_taxonomy_questions(content, bloom_level):
     """
-    Generate questions using Bloom's Taxonomy based on difficulty level
+    Generate questions using specific Bloom's Taxonomy level
     
     Args:
         content (str): The slide content to generate questions from
-        difficulty_level (str): Difficulty level ("Diploma" or "Degree")
+        bloom_level (str): Bloom's Taxonomy level
     
     Returns:
         list: List of question dictionaries
     """
     try:
-        all_questions = []
-        
-        # Define Bloom's levels based on difficulty
-        if difficulty_level == "Diploma":
-            bloom_levels = ["Remember", "Understand", "Apply"]
-        else:  # Degree
-            bloom_levels = ["Analyze", "Evaluate", "Create"]
-        
-        # Generate 10 questions for each Bloom's level
-        for level in bloom_levels:
-            questions = generate_questions_for_bloom_level(content, level)
-            all_questions.extend(questions)
-        
-        return all_questions
+        # Generate 10 questions for the specified Bloom's level
+        questions = generate_questions_for_bloom_level(content, bloom_level)
+        return questions
     
     except Exception as e:
-        st.error(f"Error generating Bloom's Taxonomy questions: {e}")
+        st.error(f"Error generating questions for Bloom's level {bloom_level}: {e}")
         return []
 
 def generate_questions_for_bloom_level(content, bloom_level):
@@ -123,7 +81,7 @@ def generate_questions_for_bloom_level(content, bloom_level):
     
     # Craft the prompt with the appropriate Bloom's level description
     prompt = f"""
-    Based on the following lecture slide content, generate 10 multiple-choice questions at the "{bloom_level}" level of Bloom's Taxonomy.
+    Based on the following content, generate 10 multiple-choice questions at the "{bloom_level}" level of Bloom's Taxonomy.
     
     {level_descriptions[bloom_level]}
     
@@ -148,7 +106,7 @@ def generate_questions_for_bloom_level(content, bloom_level):
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": f"You are an educational assistant that creates accurate multiple-choice questions based on lecture content. You specialize in creating questions at the {bloom_level} level of Bloom's Taxonomy."},
+            {"role": "system", "content": f"You are an educational assistant that creates accurate multiple-choice questions based on content. You specialize in creating questions at the {bloom_level} level of Bloom's Taxonomy."},
             {"role": "user", "content": prompt}
         ],
         max_tokens=3000,

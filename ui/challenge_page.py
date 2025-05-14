@@ -21,6 +21,9 @@ def display_challenge_page():
     # Challenge timer setting
     st.subheader("Challenge Settings")
     
+    # Display information about Bloom's Taxonomy level used for Challenges
+    st.info("🧐 **Bloom's Taxonomy Level: Evaluate**  \nQuestions will focus on making judgments, assessing value, defending opinions, and critiquing ideas based on specific criteria.")
+    
     # Timer options
     col1, col2 = st.columns(2)
     with col1:
@@ -76,8 +79,8 @@ def display_challenge_page():
                     st.markdown(f"**Reason**: {q['reason']}")
                     st.markdown("---")
             
-            # Generate harder questions
-            if st.button("Generate Harder Questions"):
+            # Generate harder questions at Evaluate level
+            if st.button("Generate Evaluate-Level Questions"):
                 # Combine questions for context
                 context = ""
                 for q in prerequisite_questions:
@@ -87,8 +90,12 @@ def display_challenge_page():
                     context += f"Answer: {q['correct_answer']}\n"
                     context += f"Reason: {q['reason']}\n\n"
                 
-                with st.spinner("Generating harder questions based on prerequisites..."):
-                    st.session_state.questions = generate_questions_with_openai(context, question_type="challenge")
+                with st.spinner("Generating 'Evaluate' level questions based on prerequisites..."):
+                    st.session_state.questions = generate_questions_with_openai(
+                        context, 
+                        question_type="challenge",
+                        bloom_level="Evaluate"
+                    )
                     if st.session_state.questions:
                         st.success("Challenge questions generated successfully!")
         else:
@@ -101,7 +108,7 @@ def display_challenge_page():
         edited_questions = []
         
         for i, q in enumerate(st.session_state.questions):
-            with st.expander(f"Question {i+1}"):
+            with st.expander(f"Question {i+1} - Evaluate"):
                 question_text = st.text_area(f"Question Text", q['question'], key=f"cq_{i}")
                 
                 options = {}
@@ -123,7 +130,8 @@ def display_challenge_page():
                     'question': question_text,
                     'options': options,
                     'answer': answer,
-                    'reason': reason
+                    'reason': reason,
+                    'bloom_level': "Evaluate"  # Fixed to Evaluate level for Challenges
                 })
         
         # Save all questions

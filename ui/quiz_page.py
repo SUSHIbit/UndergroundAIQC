@@ -88,18 +88,8 @@ def display_quiz_page():
             else:
                 st.info("No time limit will be applied to this quiz.")
         
-        # Add difficulty level dropdown
-        st.subheader("Difficulty Level")
-        difficulty_level = st.selectbox(
-            "Select difficulty level", 
-            ["Diploma", "Degree"]
-        )
-        
-        # Show info about Bloom's Taxonomy levels based on selected difficulty
-        if difficulty_level == "Diploma":
-            st.info("Will generate 30 questions: 10 Remember, 10 Understand, and 10 Apply level questions.")
-        else:  # Degree
-            st.info("Will generate 30 questions: 10 Analyze, 10 Evaluate, and 10 Create level questions.")
+        # Display information about Bloom's Taxonomy level used for Quizzes
+        st.info("📊 **Bloom's Taxonomy Level: Analyze**  \nQuestions will focus on breaking down concepts, examining relationships, identifying patterns, and drawing conclusions.")
     
     # PowerPoint upload and processing
     if subject_id and topic_id:
@@ -117,14 +107,14 @@ def display_quiz_page():
                     with st.expander("View Slide Content"):
                         st.text_area("Content extracted from slides", ppt_content, height=200)
                     
-                    # Generate questions based on difficulty level
+                    # Generate questions at Analyze level
                     if st.button("Generate Questions"):
-                        with st.spinner("Generating questions with AI..."):
-                            # Pass difficulty level to the generator function
+                        with st.spinner("Generating 'Analyze' level questions with AI..."):
+                            # Pass the fixed bloom level to the generator function
                             st.session_state.questions = generate_questions_with_openai(
                                 ppt_content, 
                                 question_type="quiz", 
-                                difficulty_level=difficulty_level
+                                bloom_level="Analyze"
                             )
                             if st.session_state.questions:
                                 st.success("Questions generated successfully!")
@@ -136,7 +126,7 @@ def display_quiz_page():
         edited_questions = []
         
         for i, q in enumerate(st.session_state.questions):
-            with st.expander(f"Question {i+1} - {q.get('bloom_level', '')}"):
+            with st.expander(f"Question {i+1} - Analyze"):
                 question_text = st.text_area(f"Question Text", q['question'], key=f"q_{i}")
                 
                 options = {}
@@ -159,7 +149,7 @@ def display_quiz_page():
                     'options': options,
                     'answer': answer,
                     'reason': reason,
-                    'bloom_level': q.get('bloom_level', '')
+                    'bloom_level': "Analyze"  # Fixed to Analyze level for Quizzes
                 })
         
         # Save all questions

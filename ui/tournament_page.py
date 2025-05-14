@@ -50,6 +50,9 @@ def display_tournament_page():
     """Display the tournament creation page"""
     display_header("Create Tournament", "Design a competition for students")
     
+    # Display information about Bloom's Taxonomy level used for Tournaments
+    st.info("🚀 **Bloom's Taxonomy Level: Create**  \nThis tournament will promote activities focusing on designing, constructing, planning, producing, and inventing new solutions and approaches.")
+    
     # Initialize session state variables
     if 'tournament_data' not in st.session_state:
         st.session_state.tournament_data = None

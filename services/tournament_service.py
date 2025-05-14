@@ -24,11 +24,22 @@ def generate_tournament_with_openai(description="", tournament_type="web_design"
             else:
                 description = f"A company is looking for talented {tournament_type.replace('_', ' ')} developers to solve a pressing business challenge."
         
+        # Add Bloom's Taxonomy 'Create' level emphasis
+        create_level_context = """
+        This tournament should align with the 'Create' level of Bloom's Taxonomy. 
+        The tasks should focus on designing, building, constructing, planning, producing, 
+        inventing, devising, making, and composing new and original solutions. 
+        Use action verbs like: create, design, develop, formulate, build, construct, produce, invent, devise, 
+        make, generate, compose, originate, plan, and synthesize in task descriptions.
+        """
+        
         # Build prompt based on tournament type
         if tournament_type == "hackathon":
             prompt = f"""
             Generate detailed information for a hackathon tournament for university students based on the following description:
             {description}
+            
+            {create_level_context}
             
             Please provide the following details in a structured format:
             1. Title (creative and engaging, technical-sounding)
@@ -43,13 +54,15 @@ def generate_tournament_with_openai(description="", tournament_type="web_design"
             10. Judging criteria (specific about technical complexity, code quality, innovation, scalability, and presentation)
             11. Project submission guidelines (code repository, demo video, API documentation)
             
-            The hackathon should be significantly more challenging than a web design competition, requiring integration of multiple technologies.
+            The hackathon should challenge students to create, construct, and design innovative solutions that are original and new.
             Format the response as JSON to be easily parsed.
             """
         else:  # Default to web_design or other types
             prompt = f"""
             Generate detailed information for a {tournament_type.replace('_', ' ')} tournament for university students based on the following description:
             {description}
+            
+            {create_level_context}
             
             Please provide the following details in a structured format:
             1. Title (creative and engaging)
@@ -61,17 +74,18 @@ def generate_tournament_with_openai(description="", tournament_type="web_design"
             7. Team size (between 1-4)
             8. Submission deadline (before the tournament date)
             9. Tournament rules (detailed)
-            10. Judging criteria (be specific based on the tournament type)
+            10. Judging criteria (be specific based on the tournament type, emphasize creative and innovative solutions)
             11. Project submission guidelines (what needs to be submitted and how)
             
             Be creative with the theme and make it engaging for university students. The title should be catchy and related to the theme.
+            Emphasize creative, innovative, and original solutions - students should be designing and producing new and original work.
             Format the response as JSON to be easily parsed.
             """
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a tournament planning assistant that creates detailed creative competitions for university students."},
+                {"role": "system", "content": "You are a tournament planning assistant that creates detailed creative competitions for university students. Your tournaments emphasize the 'Create' level of Bloom's Taxonomy, focusing on design, building, and producing original solutions."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=2000,
@@ -165,9 +179,18 @@ def generate_creative_web_topics(count=3):
         list: List of topic dictionaries with title and description
     """
     try:
+        # Add Bloom's Taxonomy 'Create' level emphasis
+        create_level_context = """
+        These topics should align with the 'Create' level of Bloom's Taxonomy.
+        Focus on tasks that involve designing, building, constructing, planning, 
+        producing, inventing, devising, and composing new and original solutions.
+        """
+        
         prompt = f"""
         Generate {count} creative and unique web design tournament topics for university students.
         Each topic should have a different focus and theme.
+        
+        {create_level_context}
         
         For each topic, provide:
         1. A catchy title (2-7 words)
@@ -185,7 +208,7 @@ def generate_creative_web_topics(count=3):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a creative director specializing in web design competitions."},
+                {"role": "system", "content": "You are a creative director specializing in web design competitions that challenge students to create original and innovative designs."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=1500,
