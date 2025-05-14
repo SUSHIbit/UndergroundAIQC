@@ -37,34 +37,34 @@ def generate_default_rubrics(tournament_type):
     """
     if tournament_type == "web_design":
         return [
-            {"title": "Visual Design", "score_weight": 30, "description": "Aesthetics, color scheme, typography, and overall visual appeal."},
-            {"title": "User Experience", "score_weight": 40, "description": "Navigation, information architecture, and ease of use."},
-            {"title": "Technical Implementation", "score_weight": 30, "description": "Code quality, performance, and proper implementation."}
+            {"title": "Visual Design", "score_weight": 30},
+            {"title": "User Experience", "score_weight": 40},
+            {"title": "Technical Implementation", "score_weight": 30}
         ]
     elif tournament_type == "hackathon":
         return [
-            {"title": "Innovation", "score_weight": 30, "description": "Originality and creativity of the solution."},
-            {"title": "Technical Complexity", "score_weight": 40, "description": "Sophistication of implementation and use of technologies."},
-            {"title": "Functionality", "score_weight": 30, "description": "How well the solution works as intended with minimal bugs."}
+            {"title": "Innovation", "score_weight": 30},
+            {"title": "Technical Complexity", "score_weight": 40},
+            {"title": "Functionality", "score_weight": 30}
         ]
     elif tournament_type == "coding_competition":
         return [
-            {"title": "Code Quality", "score_weight": 35, "description": "Clean, maintainable code that follows best practices."},
-            {"title": "Efficiency", "score_weight": 35, "description": "Performance and optimization of algorithms and solutions."},
-            {"title": "Problem Solving", "score_weight": 30, "description": "Approach to solving challenges and handling edge cases."}
+            {"title": "Code Quality", "score_weight": 35},
+            {"title": "Efficiency", "score_weight": 35},
+            {"title": "Problem Solving", "score_weight": 30}
         ]
     elif tournament_type == "mobile":
         return [
-            {"title": "User Interface", "score_weight": 30, "description": "Visual design, layout, and responsiveness of the app."},
-            {"title": "App Functionality", "score_weight": 40, "description": "Features, performance, and user experience of the app."},
-            {"title": "Innovation", "score_weight": 30, "description": "Originality and creative approaches to solving problems."}
+            {"title": "User Interface", "score_weight": 30},
+            {"title": "App Functionality", "score_weight": 40},
+            {"title": "Innovation", "score_weight": 30}
         ]
     else:
         # Default rubrics for other tournament types
         return [
-            {"title": "Strategy", "score_weight": 40, "description": "Approach to solving the challenge and planning."},
-            {"title": "Execution", "score_weight": 30, "description": "Implementation quality and attention to detail."},
-            {"title": "Creativity", "score_weight": 30, "description": "Original ideas and innovative solutions."}
+            {"title": "Strategy", "score_weight": 40},
+            {"title": "Execution", "score_weight": 30},
+            {"title": "Creativity", "score_weight": 30}
         ]
 
 def generate_judging_criteria_text(rubrics):
@@ -84,8 +84,7 @@ def generate_judging_criteria_text(rubrics):
     
     criteria_lines = []
     for i, rubric in enumerate(valid_rubrics, 1):
-        description = rubric.get("description", "[Add specific criteria for this category]")
-        criteria_lines.append(f"{i}. {rubric['title']} ({rubric['score_weight']}%): {description}")
+        criteria_lines.append(f"{i}. {rubric['title']} ({rubric['score_weight']}%)")
     
     return "\n".join(criteria_lines)
 
@@ -105,7 +104,7 @@ def create_tournament_rubrics_ui(rubrics, add_rubric_clicked=False, remove_rubri
     
     # Handle adding a new rubric if the button was clicked
     if add_rubric_clicked:
-        rubrics.append({"title": "", "score_weight": 0, "description": ""})
+        rubrics.append({"title": "", "score_weight": 0})
     
     # Handle removing a rubric if requested and if we have more than 3
     if remove_rubric_index is not None and remove_rubric_index < len(rubrics) and len(rubrics) > 3:
@@ -155,18 +154,9 @@ def create_tournament_rubrics_ui(rubrics, add_rubric_clicked=False, remove_rubri
             else:
                 st.write("")  # Empty space to maintain alignment
         
-        # Add a description field for each rubric
-        description = st.text_input(
-            f"Description (optional)",
-            value=rubric.get("description", ""),
-            key=f"rubric_desc_{i}",
-            placeholder="Describe the criteria for this rubric item"
-        )
-        
         updated_rubrics.append({
             "title": title,
-            "score_weight": weight,
-            "description": description
+            "score_weight": weight
         })
     
     # Generate judging criteria text from the rubrics

@@ -13,9 +13,9 @@ def handle_back_to_menu():
     st.session_state.tournament_type = None
     st.session_state.last_tournament_prompt = None
     st.session_state.rubrics = [
-        {"title": "", "score_weight": 0, "description": ""},
-        {"title": "", "score_weight": 0, "description": ""},
-        {"title": "", "score_weight": 0, "description": ""}
+        {"title": "", "score_weight": 0},
+        {"title": "", "score_weight": 0},
+        {"title": "", "score_weight": 0}
     ]
     st.rerun()
 
@@ -69,9 +69,9 @@ def display_tournament_page():
     if 'rubrics' not in st.session_state:
         # Initialize with three empty rubrics
         st.session_state.rubrics = [
-            {"title": "", "score_weight": 0, "description": ""},
-            {"title": "", "score_weight": 0, "description": ""},
-            {"title": "", "score_weight": 0, "description": ""}
+            {"title": "", "score_weight": 0},
+            {"title": "", "score_weight": 0},
+            {"title": "", "score_weight": 0}
         ]
     
     # Session state for rubric actions
@@ -191,9 +191,9 @@ def display_tournament_page():
             st.session_state.tournament_type = None
             st.session_state.last_tournament_prompt = None
             st.session_state.rubrics = [
-                {"title": "", "score_weight": 0, "description": ""},
-                {"title": "", "score_weight": 0, "description": ""},
-                {"title": "", "score_weight": 0, "description": ""}
+                {"title": "", "score_weight": 0},
+                {"title": "", "score_weight": 0},
+                {"title": "", "score_weight": 0}
             ]
             handle_back_to_menu()
     
@@ -236,7 +236,7 @@ def display_tournament_page():
         
         # Handle rubric actions outside the form
         if st.button("+ Add Rubric Item", key="add_rubric_outside_form"):
-            st.session_state.rubrics.append({"title": "", "score_weight": 0, "description": ""})
+            st.session_state.rubrics.append({"title": "", "score_weight": 0})
             st.rerun()
             
         # Form for tournament details
@@ -295,7 +295,7 @@ def display_tournament_page():
             deadline_date = st.date_input("Submission Deadline Date", value=deadline_obj)
             deadline_time = st.time_input("Submission Deadline Time", value=datetime.strptime("23:59:59", "%H:%M:%S").time())
             
-            # Add Judging Date - NEW FIELD
+            # Add Judging Date
             judging_default = deadline_obj + timedelta(days=1)  # Default to one day after submission deadline
             judging_date_str = tournament_data.get("judging_date", judging_default.strftime("%Y-%m-%d %H:%M:%S"))
             try:
@@ -313,8 +313,7 @@ def display_tournament_page():
             # Rules field
             rules = st.text_area("Rules", value=tournament_data.get("rules", ""))
             
-            # Rubrics Section - Use the improved helper function
-            # Note that we can't use buttons inside a form, so we'll handle rubric management outside the form
+            # Rubrics Section
             st.subheader("Rubrics")
             st.info("Define at least 3 rubric items. The total weight must equal 100.")
             
@@ -363,18 +362,9 @@ def display_tournament_page():
                     else:
                         st.write("")  # Empty space to maintain alignment
                 
-                # Add a description field for each rubric
-                description = st.text_input(
-                    f"Description (optional)",
-                    value=rubric.get("description", ""),
-                    key=f"rubric_desc_{i}",
-                    placeholder="Describe the criteria for this rubric item"
-                )
-                
                 updated_rubrics.append({
                     "title": title,
-                    "score_weight": weight,
-                    "description": description
+                    "score_weight": weight
                 })
             
             # Generate judging criteria text from the rubrics
@@ -462,9 +452,9 @@ def display_tournament_page():
                             st.session_state.tournament_data = None
                             st.session_state.tournament_saved = True
                             st.session_state.rubrics = [
-                                {"title": "", "score_weight": 0, "description": ""},
-                                {"title": "", "score_weight": 0, "description": ""},
-                                {"title": "", "score_weight": 0, "description": ""}
+                                {"title": "", "score_weight": 0},
+                                {"title": "", "score_weight": 0},
+                                {"title": "", "score_weight": 0}
                             ]
                             st.rerun()  # Rerun to show success message outside the form
     
