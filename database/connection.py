@@ -17,11 +17,13 @@ def get_db_connection():
     Create and return a connection to the MySQL database
     """
     try:
+        # Hardcoded values for testing
         return mysql.connector.connect(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            database=DB_NAME
+            host="srv482.hstgr.io",  # Direct value instead of environment variable
+            user="u975692652_sushimaru4",
+            password="K~s2ivj~33K",
+            database="u975692652_projectugf",
+            port=3306
         )
     except Exception as e:
         st.error(f"Database connection error: {e}")
