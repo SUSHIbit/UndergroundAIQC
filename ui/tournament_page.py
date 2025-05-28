@@ -50,11 +50,35 @@ def update_rubric_title(index):
     """Update rubric title in session state"""
     if f"rubric_title_{index}" in st.session_state:
         st.session_state.rubrics[index]["title"] = st.session_state[f"rubric_title_{index}"]
+        # Update judging criteria when rubrics change
+        update_judging_criteria_from_rubrics()
 
 def update_rubric_weight(index):
     """Update rubric weight in session state"""
     if f"rubric_weight_{index}" in st.session_state:
         st.session_state.rubrics[index]["score_weight"] = st.session_state[f"rubric_weight_{index}"]
+        # Update judging criteria when rubrics change
+        update_judging_criteria_from_rubrics()
+
+def update_judging_criteria_from_rubrics():
+    """Update judging criteria in tournament_data based on current rubrics"""
+    judging_criteria_text = generate_detailed_judging_criteria_text(st.session_state.rubrics)
+    if judging_criteria_text and 'tournament_data' in st.session_state:
+        # Only update if the current judging criteria is empty or matches the previous auto-generated content
+        current_criteria = st.session_state.tournament_data.get("judging_criteria", "")
+        
+        # Check if current criteria looks like auto-generated content (simple format)
+        is_simple_format = (
+            current_criteria.count(":") > 2 and 
+            current_criteria.count("*") == 0 and 
+            current_criteria.count("•") == 0
+        )
+        
+        # Only auto-update if criteria is empty or in simple format
+        if not current_criteria or is_simple_format:
+            st.session_state.tournament_data["judging_criteria"] = judging_criteria_text
+            # Force update the text area widget
+            st.session_state.tournament_judging_criteria = judging_criteria_text
 
 def display_tournament_page():
     """Display the tournament creation page"""
@@ -135,6 +159,8 @@ def display_tournament_page():
                 # Initialize empty tournament data with the selected type
                 st.session_state.tournament_data = {"type": st.session_state.tournament_type, "title": "", "description": ""}
                 st.session_state.show_ai_input = False
+                # Initialize judging criteria with detailed rubrics
+                update_judging_criteria_from_rubrics()
                 st.rerun()
         
         with col2:
@@ -179,6 +205,9 @@ def display_tournament_page():
                             # Initialize rubrics with default values based on tournament type
                             st.session_state.rubrics = generate_default_rubrics(st.session_state.tournament_type)
                             
+                            # Update judging criteria from rubrics
+                            update_judging_criteria_from_rubrics()
+                            
                             st.session_state.show_ai_input = False
                             st.rerun()
                 
@@ -217,6 +246,8 @@ def display_tournament_page():
                         st.session_state.tournament_type
                     )
                     st.session_state.tournament_data = tournament_data
+                    # Update judging criteria from rubrics
+                    update_judging_criteria_from_rubrics()
                     st.rerun()
         
         with col2:
@@ -232,6 +263,8 @@ def display_tournament_page():
                         st.session_state.tournament_type
                     )
                     st.session_state.tournament_data = tournament_data
+                    # Update judging criteria from rubrics
+                    update_judging_criteria_from_rubrics()
                     st.rerun()
         
         # Get available judges
@@ -243,6 +276,8 @@ def display_tournament_page():
         # Handle rubric actions outside the form
         if st.button("+ Add Rubric Item", key="add_rubric_outside_form"):
             st.session_state.rubrics.append({"title": "", "score_weight": 0})
+            # Update judging criteria when rubrics change
+            update_judging_criteria_from_rubrics()
             st.rerun()
         
         # Auto-save functionality - save edits to session state without submitting
@@ -468,22 +503,23 @@ def display_tournament_page():
             })
         
         # Update rubrics in session state (filtered to remove any marked for deletion)
-        new_rubrics = []
-        for i, rubric in enumerate(updated_rubrics):
-            if i not in remove_indices:
-                new_rubrics.append(rubric)
-        st.session_state.rubrics = new_rubrics
+        if remove_indices:
+            new_rubrics = []
+            for i, rubric in enumerate(updated_rubrics):
+                if i not in remove_indices:
+                    new_rubrics.append(rubric)
+            st.session_state.rubrics = new_rubrics
+            # Update judging criteria when rubrics change
+            update_judging_criteria_from_rubrics()
+            st.rerun()
         
-        # Generate detailed judging criteria text from the rubrics
-        judging_criteria_text = generate_detailed_judging_criteria_text(st.session_state.rubrics)
-        
-        # Set the judging criteria text from the rubrics with auto-save
+        # Judging criteria text area - this will preserve user edits
         judging_criteria = st.text_area(
             "Judging Criteria", 
-            value=judging_criteria_text if judging_criteria_text else tournament_data.get("judging_criteria", ""),
+            value=tournament_data.get("judging_criteria", ""),
             height=300,
             key="tournament_judging_criteria",
-            help="This content is automatically generated from your rubrics with detailed explanations. You can edit it if needed.",
+            help="Edit the judging criteria as needed for your tournament.",
             on_change=lambda: st.session_state.tournament_data.update({"judging_criteria": st.session_state.tournament_judging_criteria})
         )
         
