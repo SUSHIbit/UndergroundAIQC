@@ -26,6 +26,186 @@ def validate_rubrics(rubrics):
     
     return True, "Rubrics are valid.", filtered_rubrics
 
+def get_detailed_rubric_explanations():
+    """Get detailed explanations for common rubric criteria
+    
+    Returns:
+        dict: Dictionary mapping rubric titles to detailed explanations
+    """
+    return {
+        # Web Design Rubrics
+        "Visual Design": {
+            "description": "Evaluates the aesthetic appeal, visual hierarchy, and overall design quality",
+            "criteria": [
+                "Color scheme consistency and typography choices",
+                "Layout balance and effective use of whitespace",
+                "Overall aesthetic appeal and professionalism"
+            ]
+        },
+        "User Experience": {
+            "description": "Assesses how intuitive, accessible, and user-friendly the solution is",
+            "criteria": [
+                "Navigation clarity and ease of use",
+                "Mobile responsiveness and accessibility",
+                "Overall usability and user satisfaction"
+            ]
+        },
+        "Technical Implementation": {
+            "description": "Reviews the quality of code, technical architecture, and implementation standards",
+            "criteria": [
+                "Code quality, structure, and maintainability",
+                "Performance optimization and best practices",
+                "Technical innovation and problem-solving approach"
+            ]
+        },
+        
+        # Hackathon Rubrics
+        "Innovation": {
+            "description": "Measures creativity, originality, and novel approaches to problem-solving",
+            "criteria": [
+                "Uniqueness of the solution approach",
+                "Creative use of technology and tools",
+                "Potential for real-world impact and adoption"
+            ]
+        },
+        "Technical Complexity": {
+            "description": "Evaluates the sophistication and technical depth of the implementation",
+            "criteria": [
+                "Integration of multiple technologies and APIs",
+                "Advanced features and technical capabilities",
+                "Technical challenges overcome during development"
+            ]
+        },
+        "Functionality": {
+            "description": "Assesses how well the solution works and meets the intended requirements",
+            "criteria": [
+                "Core features working as intended",
+                "Reliability and stability of the application",
+                "Overall system performance and efficiency"
+            ]
+        },
+        
+        # Coding Competition Rubrics
+        "Code Quality": {
+            "description": "Evaluates the cleanliness, structure, and maintainability of the code",
+            "criteria": [
+                "Code readability and clear naming conventions",
+                "Proper code organization and structure",
+                "Efficient algorithms and data structure choices"
+            ]
+        },
+        "Efficiency": {
+            "description": "Measures algorithm performance, optimization, and resource utilization",
+            "criteria": [
+                "Time and space complexity optimization",
+                "Performance under different input sizes",
+                "Resource utilization and system efficiency"
+            ]
+        },
+        "Problem Solving": {
+            "description": "Assesses the approach to understanding and solving the given challenges",
+            "criteria": [
+                "Understanding of problem requirements",
+                "Logical approach to problem decomposition",
+                "Creative problem-solving techniques"
+            ]
+        },
+        
+        # Mobile Development Rubrics
+        "User Interface": {
+            "description": "Evaluates the mobile app's visual design and interface elements",
+            "criteria": [
+                "Mobile-first design principles",
+                "Touch-friendly interface elements",
+                "Overall aesthetic appeal on mobile devices"
+            ]
+        },
+        "App Functionality": {
+            "description": "Assesses the core features and functionality of the mobile application",
+            "criteria": [
+                "Core app features working correctly",
+                "Smooth navigation and user experience",
+                "Performance on target mobile devices"
+            ]
+        },
+        
+        # General/Strategic Rubrics
+        "Strategy": {
+            "description": "Evaluates the strategic thinking and planning behind the solution",
+            "criteria": [
+                "Clear understanding of target audience",
+                "Strategic approach to problem-solving",
+                "Long-term vision and scalability planning"
+            ]
+        },
+        "Execution": {
+            "description": "Measures how well the team implemented their planned solution",
+            "criteria": [
+                "Quality of final deliverable",
+                "Meeting project requirements and constraints",
+                "Effective use of available time and resources"
+            ]
+        },
+        "Creativity": {
+            "description": "Assesses original thinking and creative approaches to the challenge",
+            "criteria": [
+                "Original and unique ideas",
+                "Creative problem-solving approaches",
+                "Innovative use of existing technologies"
+            ]
+        },
+        
+        # Presentation and Communication
+        "Presentation": {
+            "description": "Evaluates how effectively the team communicates their solution",
+            "criteria": [
+                "Clarity of explanation and demonstration",
+                "Professional presentation skills",
+                "Ability to answer questions confidently"
+            ]
+        }
+    }
+
+def generate_detailed_judging_criteria_text(rubrics):
+    """Generate detailed judging criteria text with explanations for each rubric
+    
+    Args:
+        rubrics (list): List of valid rubric dictionaries
+    
+    Returns:
+        str: Detailed judging criteria text with explanations
+    """
+    # Filter out empty rubrics
+    valid_rubrics = [r for r in rubrics if r["title"].strip() and r["score_weight"] > 0]
+    
+    if not valid_rubrics:
+        return ""
+    
+    explanations = get_detailed_rubric_explanations()
+    criteria_lines = []
+    
+    for i, rubric in enumerate(valid_rubrics, 1):
+        title = rubric['title']
+        weight = rubric['score_weight']
+        
+        # Start with the basic rubric line
+        criteria_lines.append(f"{i}. **{title} ({weight}%)**")
+        
+        # Add detailed explanation if available
+        if title in explanations:
+            explanation = explanations[title]
+            criteria_lines.append(f"   *{explanation['description']}*")
+            criteria_lines.append("   **Evaluation Criteria:**")
+            for criterion in explanation['criteria']:
+                criteria_lines.append(f"   • {criterion}")
+        else:
+            # Generic explanation for custom rubric items
+            criteria_lines.append(f"   *This criterion will be evaluated based on the quality, completeness, and effectiveness of the {title.lower()} aspects of your submission.*")
+        
+        criteria_lines.append("")  # Add spacing between rubrics
+    
+    return "\n".join(criteria_lines)
+
 def generate_default_rubrics(tournament_type):
     """Generate default rubrics based on tournament type
     
@@ -66,27 +246,6 @@ def generate_default_rubrics(tournament_type):
             {"title": "Execution", "score_weight": 30},
             {"title": "Creativity", "score_weight": 30}
         ]
-
-def generate_judging_criteria_text(rubrics):
-    """Generate formatted judging criteria text from rubrics
-    
-    Args:
-        rubrics (list): List of valid rubric dictionaries
-    
-    Returns:
-        str: Formatted judging criteria text
-    """
-    # Filter out empty rubrics
-    valid_rubrics = [r for r in rubrics if r["title"].strip() and r["score_weight"] > 0]
-    
-    if not valid_rubrics:
-        return ""
-    
-    criteria_lines = []
-    for i, rubric in enumerate(valid_rubrics, 1):
-        criteria_lines.append(f"{i}. {rubric['title']} ({rubric['score_weight']}%)")
-    
-    return "\n".join(criteria_lines)
 
 def create_tournament_rubrics_ui(rubrics, add_rubric_clicked=False, remove_rubric_index=None):
     """Create UI for editing tournament rubrics
@@ -159,7 +318,7 @@ def create_tournament_rubrics_ui(rubrics, add_rubric_clicked=False, remove_rubri
             "score_weight": weight
         })
     
-    # Generate judging criteria text from the rubrics
-    judging_criteria_text = generate_judging_criteria_text(updated_rubrics)
+    # Generate detailed judging criteria text from the rubrics
+    judging_criteria_text = generate_detailed_judging_criteria_text(updated_rubrics)
     
     return updated_rubrics, judging_criteria_text
