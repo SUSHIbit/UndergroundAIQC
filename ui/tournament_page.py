@@ -46,20 +46,6 @@ def parse_team_size(team_size_value):
     # Default value if parsing fails
     return 2
 
-def update_rubric_title(index):
-    """Update rubric title in session state"""
-    if f"rubric_title_{index}" in st.session_state:
-        st.session_state.rubrics[index]["title"] = st.session_state[f"rubric_title_{index}"]
-        # Update judging criteria when rubrics change
-        update_judging_criteria_from_rubrics()
-
-def update_rubric_weight(index):
-    """Update rubric weight in session state"""
-    if f"rubric_weight_{index}" in st.session_state:
-        st.session_state.rubrics[index]["score_weight"] = st.session_state[f"rubric_weight_{index}"]
-        # Update judging criteria when rubrics change
-        update_judging_criteria_from_rubrics()
-
 def update_judging_criteria_from_rubrics():
     """Update judging criteria in tournament_data based on current rubrics"""
     judging_criteria_text = generate_detailed_judging_criteria_text(st.session_state.rubrics)
@@ -77,8 +63,6 @@ def update_judging_criteria_from_rubrics():
         # Only auto-update if criteria is empty or in simple format
         if not current_criteria or is_simple_format:
             st.session_state.tournament_data["judging_criteria"] = judging_criteria_text
-            # Force update the text area widget
-            st.session_state.tournament_judging_criteria = judging_criteria_text
 
 def display_tournament_page():
     """Display the tournament creation page"""
@@ -280,10 +264,6 @@ def display_tournament_page():
             update_judging_criteria_from_rubrics()
             st.rerun()
         
-        # Auto-save functionality - save edits to session state without submitting
-        if 'tournament_data' not in st.session_state:
-            st.session_state.tournament_data = {}
-        
         # Get tournament data from session state
         tournament_data = st.session_state.tournament_data
         
@@ -293,23 +273,37 @@ def display_tournament_page():
         # Tournament type display
         st.markdown(f"**Tournament Type:** {st.session_state.tournament_type.replace('_', ' ').title()}")
         
-        # Basic details with auto-save
-        title = st.text_input(
-            "Title", 
-            value=tournament_data.get("title", ""),
-            key="tournament_title",
-            on_change=lambda: st.session_state.tournament_data.update({"title": st.session_state.tournament_title})
-        )
+        # Initialize form data in session state if not present
+        form_fields = [
+            'tournament_title', 'tournament_description', 'tournament_location', 
+            'tournament_eligibility', 'tournament_rank', 'tournament_team_size',
+            'tournament_rules', 'tournament_judging_criteria', 'tournament_project_submission'
+        ]
         
-        description = st.text_area(
-            "Description", 
-            value=tournament_data.get("description", ""),
-            key="tournament_description",
-            on_change=lambda: st.session_state.tournament_data.update({"description": st.session_state.tournament_description})
-        )
+        for field in form_fields:
+            if field not in st.session_state:
+                if field == 'tournament_title':
+                    st.session_state[field] = tournament_data.get("title", "")
+                elif field == 'tournament_description':
+                    st.session_state[field] = tournament_data.get("description", "")
+                elif field == 'tournament_location':
+                    st.session_state[field] = tournament_data.get("location", "")
+                elif field == 'tournament_eligibility':
+                    st.session_state[field] = tournament_data.get("eligibility", "")
+                elif field == 'tournament_rank':
+                    rank_options = ["Unranked", "Bronze", "Silver", "Gold", "Master", "Grand Master", "One Above All"]
+                    st.session_state[field] = tournament_data.get("minimum_rank", "Bronze") if tournament_data.get("minimum_rank") in rank_options else "Bronze"
+                elif field == 'tournament_team_size':
+                    st.session_state[field] = parse_team_size(tournament_data.get("team_size", 2))
+                elif field == 'tournament_rules':
+                    st.session_state[field] = tournament_data.get("rules", "")
+                elif field == 'tournament_judging_criteria':
+                    st.session_state[field] = tournament_data.get("judging_criteria", "")
+                elif field == 'tournament_project_submission':
+                    st.session_state[field] = tournament_data.get("project_submission", "")
         
-        col1, col2 = st.columns(2)
-        with col1:
+        # Initialize date/time fields in session state if not present
+        if 'tournament_date' not in st.session_state:
             date_default = datetime.now() + timedelta(days=30)
             date_str = tournament_data.get("date_time", date_default.strftime("%Y-%m-%d %H:%M:%S"))
             try:
@@ -319,132 +313,69 @@ def display_tournament_page():
                     date_obj = date_default
             except:
                 date_obj = date_default
-                
-            date_time = st.date_input(
-                "Date", 
-                value=date_obj,
-                key="tournament_date",
-                on_change=lambda: st.session_state.tournament_data.update({
-                    "date_time": datetime.combine(st.session_state.tournament_date, 
-                                                datetime.strptime("14:00:00", "%H:%M:%S").time()).strftime("%Y-%m-%d %H:%M:%S")
-                })
-            )
-            
-            time = st.time_input(
-                "Time", 
-                value=datetime.strptime("14:00:00", "%H:%M:%S").time(),
-                key="tournament_time",
-                on_change=lambda: st.session_state.tournament_data.update({
-                    "date_time": datetime.combine(st.session_state.get("tournament_date", datetime.now().date()), 
-                                                st.session_state.tournament_time).strftime("%Y-%m-%d %H:%M:%S")
-                })
-            )
+            st.session_state['tournament_date'] = date_obj.date()
+        
+        if 'tournament_time' not in st.session_state:
+            st.session_state['tournament_time'] = datetime.strptime("14:00:00", "%H:%M:%S").time()
+        
+        if 'tournament_deadline_date' not in st.session_state:
+            deadline_default = datetime.now() + timedelta(days=25)
+            deadline_str = tournament_data.get("deadline", deadline_default.strftime("%Y-%m-%d %H:%M:%S"))
+            try:
+                if isinstance(deadline_str, str):
+                    deadline_obj = datetime.strptime(deadline_str, "%Y-%m-%d %H:%M:%S")
+                else:
+                    deadline_obj = deadline_default
+            except:
+                deadline_obj = deadline_default
+            st.session_state['tournament_deadline_date'] = deadline_obj.date()
+        
+        if 'tournament_deadline_time' not in st.session_state:
+            st.session_state['tournament_deadline_time'] = datetime.strptime("23:59:59", "%H:%M:%S").time()
+        
+        if 'tournament_judging_date' not in st.session_state:
+            judging_default = datetime.now() + timedelta(days=26)
+            judging_date_str = tournament_data.get("judging_date", judging_default.strftime("%Y-%m-%d %H:%M:%S"))
+            try:
+                if isinstance(judging_date_str, str):
+                    judging_date_obj = datetime.strptime(judging_date_str, "%Y-%m-%d %H:%M:%S")
+                else:
+                    judging_date_obj = judging_default
+            except:
+                judging_date_obj = judging_default
+            st.session_state['tournament_judging_date'] = judging_date_obj.date()
+        
+        if 'tournament_judging_time' not in st.session_state:
+            st.session_state['tournament_judging_time'] = datetime.strptime("10:00:00", "%H:%M:%S").time()
+        
+        # Basic details without on_change callbacks
+        title = st.text_input("Title", key="tournament_title")
+        description = st.text_area("Description", key="tournament_description")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            date_time = st.date_input("Date", key="tournament_date")
+            time = st.time_input("Time", key="tournament_time")
             
         with col2:
-            location = st.text_input(
-                "Location", 
-                value=tournament_data.get("location", ""),
-                key="tournament_location",
-                on_change=lambda: st.session_state.tournament_data.update({"location": st.session_state.tournament_location})
-            )
-            
-            # Eligibility
-            eligibility = st.text_area(
-                "Eligibility", 
-                value=tournament_data.get("eligibility", ""),
-                key="tournament_eligibility",
-                on_change=lambda: st.session_state.tournament_data.update({"eligibility": st.session_state.tournament_eligibility})
-            )
+            location = st.text_input("Location", key="tournament_location")
+            eligibility = st.text_area("Eligibility", key="tournament_eligibility")
             
             rank_options = ["Unranked", "Bronze", "Silver", "Gold", "Master", "Grand Master", "One Above All"]
-            default_rank_index = rank_options.index(tournament_data.get("minimum_rank", "Bronze")) if tournament_data.get("minimum_rank") in rank_options else 1
-            minimum_rank = st.selectbox(
-                "Minimum Rank", 
-                rank_options, 
-                index=default_rank_index,
-                key="tournament_rank",
-                on_change=lambda: st.session_state.tournament_data.update({"minimum_rank": st.session_state.tournament_rank})
-            )
+            minimum_rank = st.selectbox("Minimum Rank", rank_options, key="tournament_rank")
             
-            team_size = st.number_input(
-                "Team Size", 
-                min_value=1, 
-                max_value=5, 
-                value=parse_team_size(tournament_data.get("team_size", 2)),
-                key="tournament_team_size",
-                on_change=lambda: st.session_state.tournament_data.update({"team_size": st.session_state.tournament_team_size})
-            )
+            team_size = st.number_input("Team Size", min_value=1, max_value=5, key="tournament_team_size")
         
-        # Deadline with auto-save
-        deadline_default = datetime.now() + timedelta(days=25)
-        deadline_str = tournament_data.get("deadline", deadline_default.strftime("%Y-%m-%d %H:%M:%S"))
-        try:
-            if isinstance(deadline_str, str):
-                deadline_obj = datetime.strptime(deadline_str, "%Y-%m-%d %H:%M:%S")
-            else:
-                deadline_obj = deadline_default
-        except:
-            deadline_obj = deadline_default
-            
-        deadline_date = st.date_input(
-            "Submission Deadline Date", 
-            value=deadline_obj,
-            key="tournament_deadline_date",
-            on_change=lambda: st.session_state.tournament_data.update({
-                "deadline": datetime.combine(st.session_state.tournament_deadline_date, 
-                                           datetime.strptime("23:59:59", "%H:%M:%S").time()).strftime("%Y-%m-%d %H:%M:%S")
-            })
-        )
+        # Deadline
+        deadline_date = st.date_input("Submission Deadline Date", key="tournament_deadline_date")
+        deadline_time = st.time_input("Submission Deadline Time", key="tournament_deadline_time")
         
-        deadline_time = st.time_input(
-            "Submission Deadline Time", 
-            value=datetime.strptime("23:59:59", "%H:%M:%S").time(),
-            key="tournament_deadline_time",
-            on_change=lambda: st.session_state.tournament_data.update({
-                "deadline": datetime.combine(st.session_state.get("tournament_deadline_date", datetime.now().date()), 
-                                           st.session_state.tournament_deadline_time).strftime("%Y-%m-%d %H:%M:%S")
-            })
-        )
+        # Judging Date
+        judging_date = st.date_input("Judging Date", key="tournament_judging_date", help="Date when judging will begin. Must be on or after the submission deadline.")
+        judging_time = st.time_input("Judging Time", key="tournament_judging_time")
         
-        # Add Judging Date with auto-save
-        judging_default = deadline_obj + timedelta(days=1)  # Default to one day after submission deadline
-        judging_date_str = tournament_data.get("judging_date", judging_default.strftime("%Y-%m-%d %H:%M:%S"))
-        try:
-            if isinstance(judging_date_str, str):
-                judging_date_obj = datetime.strptime(judging_date_str, "%Y-%m-%d %H:%M:%S")
-            else:
-                judging_date_obj = judging_default
-        except:
-            judging_date_obj = judging_default
-            
-        judging_date = st.date_input(
-            "Judging Date", 
-            value=judging_date_obj,
-            key="tournament_judging_date",
-            help="Date when judging will begin. Must be on or after the submission deadline.",
-            on_change=lambda: st.session_state.tournament_data.update({
-                "judging_date": datetime.combine(st.session_state.tournament_judging_date, 
-                                               datetime.strptime("10:00:00", "%H:%M:%S").time()).strftime("%Y-%m-%d %H:%M:%S")
-            })
-        )
-        
-        judging_time = st.time_input(
-            "Judging Time", 
-            value=datetime.strptime("10:00:00", "%H:%M:%S").time(),
-            key="tournament_judging_time",
-            on_change=lambda: st.session_state.tournament_data.update({
-                "judging_date": datetime.combine(st.session_state.get("tournament_judging_date", datetime.now().date()), 
-                                               st.session_state.tournament_judging_time).strftime("%Y-%m-%d %H:%M:%S")
-            })
-        )
-        
-        # Rules field with auto-save
-        rules = st.text_area(
-            "Rules", 
-            value=tournament_data.get("rules", ""),
-            key="tournament_rules",
-            on_change=lambda: st.session_state.tournament_data.update({"rules": st.session_state.tournament_rules})
-        )
+        # Rules field
+        rules = st.text_area("Rules", key="tournament_rules")
         
         # Rubrics Section
         st.subheader("Rubrics")
@@ -472,22 +403,16 @@ def display_tournament_page():
             col1, col2, col3 = st.columns([3, 1, 0.5])
             
             with col1:
-                title = st.text_input(
-                    f"Rubric #{i+1} Title",
-                    value=rubric.get("title", ""),
-                    key=f"rubric_title_{i}",
-                    on_change=lambda i=i: update_rubric_title(i)
-                )
+                title_key = f"rubric_title_{i}"
+                if title_key not in st.session_state:
+                    st.session_state[title_key] = rubric.get("title", "")
+                title = st.text_input(f"Rubric #{i+1} Title", key=title_key)
             
             with col2:
-                weight = st.number_input(
-                    f"Weight (%)",
-                    min_value=0,
-                    max_value=100,
-                    value=rubric.get("score_weight", 0),
-                    key=f"rubric_weight_{i}",
-                    on_change=lambda i=i: update_rubric_weight(i)
-                )
+                weight_key = f"rubric_weight_{i}"
+                if weight_key not in st.session_state:
+                    st.session_state[weight_key] = rubric.get("score_weight", 0)
+                weight = st.number_input(f"Weight (%)", min_value=0, max_value=100, key=weight_key)
                 
             with col3:
                 # For rubrics beyond the minimum 3, show a checkbox for removal
@@ -512,44 +437,43 @@ def display_tournament_page():
             # Update judging criteria when rubrics change
             update_judging_criteria_from_rubrics()
             st.rerun()
+        else:
+            # Update rubrics in session state
+            st.session_state.rubrics = updated_rubrics
         
-        # Judging criteria text area - this will preserve user edits
+        # Judging criteria text area
+        if 'tournament_judging_criteria' not in st.session_state:
+            st.session_state['tournament_judging_criteria'] = tournament_data.get("judging_criteria", "")
+        
         judging_criteria = st.text_area(
             "Judging Criteria", 
-            value=tournament_data.get("judging_criteria", ""),
             height=300,
             key="tournament_judging_criteria",
-            help="Edit the judging criteria as needed for your tournament.",
-            on_change=lambda: st.session_state.tournament_data.update({"judging_criteria": st.session_state.tournament_judging_criteria})
+            help="Edit the judging criteria as needed for your tournament."
         )
         
-        # Project submission requirements with auto-save
-        project_submission = st.text_area(
-            "Project Submission Requirements", 
-            value=tournament_data.get("project_submission", ""),
-            key="tournament_project_submission",
-            on_change=lambda: st.session_state.tournament_data.update({"project_submission": st.session_state.tournament_project_submission})
-        )
+        # Project submission requirements
+        project_submission = st.text_area("Project Submission Requirements", key="tournament_project_submission")
         
         # Judge selection
         st.subheader("Select Judges")
         
         if available_judges:
-            # Create multiple selection for judges
-            judge_options = {j['id']: f"{j['name']} ({j['username']})" for j in available_judges}
-            selected_judges = []
+            # Initialize selected judges in session state
+            if 'selected_judges' not in st.session_state:
+                st.session_state['selected_judges'] = []
             
+            selected_judges = []
             st.write("Select judges for this tournament:")
             for judge in available_judges:
-                # Auto-save judge selections
                 judge_key = f"judge_{judge['id']}"
+                if judge_key not in st.session_state:
+                    st.session_state[judge_key] = False
+                
                 if st.checkbox(f"{judge['name']} ({judge['username']})", key=judge_key):
                     selected_judges.append(judge['id'])
             
-            # Save selected judges to session state
-            if 'selected_judges' not in st.session_state.tournament_data:
-                st.session_state.tournament_data['selected_judges'] = []
-            st.session_state.tournament_data['selected_judges'] = selected_judges
+            st.session_state['selected_judges'] = selected_judges
             
             if not selected_judges:
                 st.warning("Please select at least one judge.")
@@ -557,36 +481,39 @@ def display_tournament_page():
             st.error("No judges available. Please add users with the judge flag first.")
             selected_judges = []
         
-        # Final Submit Button (outside of form, standalone)
+        # Final Submit Button
         st.markdown("---")
         col1, col2, col3 = st.columns([1, 2, 1])
         
         with col2:
             if st.button("💾 Save Tournament to Database", key="save_tournament_final", use_container_width=True, type="primary"):
                 # Get final values from session state
-                final_title = st.session_state.tournament_data.get("title", "")
-                final_description = st.session_state.tournament_data.get("description", "")
-                final_location = st.session_state.tournament_data.get("location", "")
-                final_eligibility = st.session_state.tournament_data.get("eligibility", "")
-                final_minimum_rank = st.session_state.tournament_data.get("minimum_rank", "Bronze")
-                final_team_size = st.session_state.tournament_data.get("team_size", 2)
-                final_rules = st.session_state.tournament_data.get("rules", "")
-                final_judging_criteria = st.session_state.tournament_data.get("judging_criteria", "")
-                final_project_submission = st.session_state.tournament_data.get("project_submission", "")
-                final_selected_judges = st.session_state.tournament_data.get("selected_judges", [])
+                final_title = st.session_state.get("tournament_title", "")
+                final_description = st.session_state.get("tournament_description", "")
+                final_location = st.session_state.get("tournament_location", "")
+                final_eligibility = st.session_state.get("tournament_eligibility", "")
+                final_minimum_rank = st.session_state.get("tournament_rank", "Bronze")
+                final_team_size = st.session_state.get("tournament_team_size", 2)
+                final_rules = st.session_state.get("tournament_rules", "")
+                final_judging_criteria = st.session_state.get("tournament_judging_criteria", "")
+                final_project_submission = st.session_state.get("tournament_project_submission", "")
+                final_selected_judges = st.session_state.get("selected_judges", [])
                 
-                # Get dates from session state or current values
-                final_date_time = st.session_state.tournament_data.get("date_time", 
-                    datetime.combine(st.session_state.get("tournament_date", datetime.now().date()), 
-                                   st.session_state.get("tournament_time", datetime.strptime("14:00:00", "%H:%M:%S").time())).strftime("%Y-%m-%d %H:%M:%S"))
+                # Construct datetime strings from separate date and time inputs
+                final_date_time = datetime.combine(
+                    st.session_state.get("tournament_date", datetime.now().date()),
+                    st.session_state.get("tournament_time", datetime.strptime("14:00:00", "%H:%M:%S").time())
+                ).strftime("%Y-%m-%d %H:%M:%S")
                 
-                final_deadline = st.session_state.tournament_data.get("deadline",
-                    datetime.combine(st.session_state.get("tournament_deadline_date", datetime.now().date()), 
-                                   st.session_state.get("tournament_deadline_time", datetime.strptime("23:59:59", "%H:%M:%S").time())).strftime("%Y-%m-%d %H:%M:%S"))
+                final_deadline = datetime.combine(
+                    st.session_state.get("tournament_deadline_date", datetime.now().date()),
+                    st.session_state.get("tournament_deadline_time", datetime.strptime("23:59:59", "%H:%M:%S").time())
+                ).strftime("%Y-%m-%d %H:%M:%S")
                 
-                final_judging_date = st.session_state.tournament_data.get("judging_date",
-                    datetime.combine(st.session_state.get("tournament_judging_date", datetime.now().date()), 
-                                   st.session_state.get("tournament_judging_time", datetime.strptime("10:00:00", "%H:%M:%S").time())).strftime("%Y-%m-%d %H:%M:%S"))
+                final_judging_date = datetime.combine(
+                    st.session_state.get("tournament_judging_date", datetime.now().date()),
+                    st.session_state.get("tournament_judging_time", datetime.strptime("10:00:00", "%H:%M:%S").time())
+                ).strftime("%Y-%m-%d %H:%M:%S")
                 
                 # Validate form
                 if not final_title or not final_description:
@@ -617,20 +544,47 @@ def display_tournament_page():
                             final_judging_criteria,
                             final_project_submission,
                             final_selected_judges,
-                            filtered_rubrics,  # Pass the validated rubrics
+                            filtered_rubrics,
                             tournament_type=st.session_state.tournament_type,
-                            judging_date=final_judging_date  # Add the new judging date field
+                            judging_date=final_judging_date
                         )
                         
                         if success:
-                            st.session_state.tournament_data = None
+                            # Clear all tournament-related session state
+                            keys_to_clear = [
+                                'tournament_data', 'tournament_title', 'tournament_description',
+                                'tournament_location', 'tournament_eligibility', 'tournament_rank',
+                                'tournament_team_size', 'tournament_date', 'tournament_time',
+                                'tournament_deadline_date', 'tournament_deadline_time',
+                                'tournament_judging_date', 'tournament_judging_time',
+                                'tournament_rules', 'tournament_judging_criteria',
+                                'tournament_project_submission', 'selected_judges'
+                            ]
+                            
+                            for key in keys_to_clear:
+                                if key in st.session_state:
+                                    del st.session_state[key]
+                            
+                            # Clear judge checkboxes
+                            for judge in available_judges:
+                                judge_key = f"judge_{judge['id']}"
+                                if judge_key in st.session_state:
+                                    del st.session_state[judge_key]
+                            
+                            # Clear rubric fields
+                            for i in range(10):  # Clear up to 10 rubric fields
+                                for field_type in ['title', 'weight']:
+                                    field_key = f"rubric_{field_type}_{i}"
+                                    if field_key in st.session_state:
+                                        del st.session_state[field_key]
+                            
                             st.session_state.tournament_saved = True
                             st.session_state.rubrics = [
                                 {"title": "", "score_weight": 0},
                                 {"title": "", "score_weight": 0},
                                 {"title": "", "score_weight": 0}
                             ]
-                            st.rerun()  # Rerun to show success message outside the form
+                            st.rerun()
     
     # Back button - always show this
     if st.button("Back to Menu", key="back_button"):
