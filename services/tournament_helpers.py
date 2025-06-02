@@ -184,25 +184,41 @@ def generate_detailed_judging_criteria_text(rubrics):
     explanations = get_detailed_rubric_explanations()
     criteria_lines = []
     
+    criteria_lines.append("**Judging Criteria:**")
+    criteria_lines.append("")
+    
     for i, rubric in enumerate(valid_rubrics, 1):
         title = rubric['title']
         weight = rubric['score_weight']
         
         # Start with the basic rubric line
-        criteria_lines.append(f"{i}. **{title} ({weight}%)**")
+        criteria_lines.append(f"**{i}. {title} ({weight}%)**")
         
         # Add detailed explanation if available
         if title in explanations:
             explanation = explanations[title]
-            criteria_lines.append(f"   *{explanation['description']}*")
-            criteria_lines.append("   **Evaluation Criteria:**")
+            criteria_lines.append(f"*{explanation['description']}*")
+            criteria_lines.append("")
+            criteria_lines.append("**Evaluation Criteria:**")
             for criterion in explanation['criteria']:
-                criteria_lines.append(f"   • {criterion}")
+                criteria_lines.append(f"• {criterion}")
         else:
             # Generic explanation for custom rubric items
-            criteria_lines.append(f"   *This criterion will be evaluated based on the quality, completeness, and effectiveness of the {title.lower()} aspects of your submission.*")
+            criteria_lines.append(f"*This criterion evaluates the quality, completeness, and effectiveness of the {title.lower()} aspects of your submission. Teams will be assessed on how well they demonstrate mastery and innovation in this area.*")
+            criteria_lines.append("")
+            criteria_lines.append("**Evaluation Focus:**")
+            criteria_lines.append(f"• Overall quality and execution of {title.lower()}")
+            criteria_lines.append(f"• Innovation and creativity in {title.lower()} approach")
+            criteria_lines.append(f"• Professional standards and best practices in {title.lower()}")
         
-        criteria_lines.append("")  # Add spacing between rubrics
+        criteria_lines.append("")
+        criteria_lines.append("---")
+        criteria_lines.append("")
+    
+    # Add footer
+    criteria_lines.append("**Total: 100%**")
+    criteria_lines.append("")
+    criteria_lines.append("*Each criterion will be scored individually, and the final score will be calculated based on the weighted percentages shown above.*")
     
     return "\n".join(criteria_lines)
 
@@ -240,7 +256,7 @@ def generate_default_rubrics(tournament_type):
             {"title": "Innovation", "score_weight": 30}
         ]
     else:
-        # Default rubrics for other tournament types
+        # Default rubrics for coup_detat and other tournament types
         return [
             {"title": "Strategy", "score_weight": 40},
             {"title": "Execution", "score_weight": 30},
