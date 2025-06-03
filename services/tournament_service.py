@@ -149,9 +149,11 @@ def verify_ai_used_description(tournament_data, description):
 
 def create_tournament_from_description(description, tournament_type):
     """Create a tournament based on user description when AI fails or doesn't use the prompt"""
+    # Tournament date: 1 month from today
     tournament_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
-    submission_deadline = (datetime.now() + timedelta(days=25)).strftime("%Y-%m-%d %H:%M:%S")
-    judging_date = (datetime.now() + timedelta(days=26)).strftime("%Y-%m-%d %H:%M:%S")
+    # Submission deadline and judging: 1 week before tournament
+    submission_deadline = (datetime.now() + timedelta(days=23)).strftime("%Y-%m-%d %H:%M:%S")
+    judging_date = (datetime.now() + timedelta(days=23)).strftime("%Y-%m-%d %H:%M:%S")
     
     # For hackathons, adjust timing
     if tournament_type == "hackathon":
@@ -268,7 +270,9 @@ def get_project_submission_requirements(tournament_type):
 
 def generate_default_hackathon():
     """Generate default hackathon tournament data as fallback"""
+    # Tournament date: 1 month from today
     tournament_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
+    # Submission deadline and judging: 1 week before tournament (but for hackathon, add 36 hours for the event itself)
     submission_deadline = (datetime.now() + timedelta(days=30, hours=36)).strftime("%Y-%m-%d %H:%M:%S")
     judging_date = (datetime.now() + timedelta(days=31, hours=12)).strftime("%Y-%m-%d %H:%M:%S")
     
@@ -289,9 +293,11 @@ def generate_default_hackathon():
 
 def generate_default_tournament():
     """Generate default web design tournament data as fallback"""
+    # Tournament date: 1 month from today
     tournament_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
-    submission_deadline = (datetime.now() + timedelta(days=25)).strftime("%Y-%m-%d %H:%M:%S")
-    judging_date = (datetime.now() + timedelta(days=26)).strftime("%Y-%m-%d %H:%M:%S")
+    # Submission deadline and judging: 1 week before tournament
+    submission_deadline = (datetime.now() + timedelta(days=23)).strftime("%Y-%m-%d %H:%M:%S")
+    judging_date = (datetime.now() + timedelta(days=23)).strftime("%Y-%m-%d %H:%M:%S")
     
     return {
         "title": "Creative Web Design Challenge",
@@ -310,9 +316,11 @@ def generate_default_tournament():
 
 def generate_default_coup_detat():
     """Generate default coup d'état tournament data"""
-    tournament_date = (datetime.now() + timedelta(days=35)).strftime("%Y-%m-%d %H:%M:%S")
-    submission_deadline = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
-    judging_date = (datetime.now() + timedelta(days=31)).strftime("%Y-%m-%d %H:%M:%S")
+    # Tournament date: 1 month from today
+    tournament_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
+    # Submission deadline and judging: 1 week before tournament
+    submission_deadline = (datetime.now() + timedelta(days=23)).strftime("%Y-%m-%d %H:%M:%S")
+    judging_date = (datetime.now() + timedelta(days=23)).strftime("%Y-%m-%d %H:%M:%S")
     
     return {
         "title": "Digital Democracy Strategic Challenge",
@@ -331,9 +339,11 @@ def generate_default_coup_detat():
 
 def generate_default_coding_competition():
     """Generate default coding competition tournament data"""
-    tournament_date = (datetime.now() + timedelta(days=28)).strftime("%Y-%m-%d %H:%M:%S")
-    submission_deadline = (datetime.now() + timedelta(days=27)).strftime("%Y-%m-%d %H:%M:%S")
-    judging_date = (datetime.now() + timedelta(days=28)).strftime("%Y-%m-%d %H:%M:%S")
+    # Tournament date: 1 month from today
+    tournament_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
+    # Submission deadline and judging: 1 week before tournament
+    submission_deadline = (datetime.now() + timedelta(days=23)).strftime("%Y-%m-%d %H:%M:%S")
+    judging_date = (datetime.now() + timedelta(days=23)).strftime("%Y-%m-%d %H:%M:%S")
     
     return {
         "title": "Algorithm Mastery Championship",
@@ -352,9 +362,11 @@ def generate_default_coding_competition():
 
 def generate_default_mobile():
     """Generate default mobile tournament data"""
-    tournament_date = (datetime.now() + timedelta(days=32)).strftime("%Y-%m-%d %H:%M:%S")
-    submission_deadline = (datetime.now() + timedelta(days=28)).strftime("%Y-%m-%d %H:%M:%S")
-    judging_date = (datetime.now() + timedelta(days=29)).strftime("%Y-%m-%d %H:%M:%S")
+    # Tournament date: 1 month from today
+    tournament_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
+    # Submission deadline and judging: 1 week before tournament
+    submission_deadline = (datetime.now() + timedelta(days=23)).strftime("%Y-%m-%d %H:%M:%S")
+    judging_date = (datetime.now() + timedelta(days=23)).strftime("%Y-%m-%d %H:%M:%S")
     
     return {
         "title": "Mobile Innovation Challenge",
@@ -464,7 +476,7 @@ def ensure_tournament_fields(tournament_data, tournament_type="web_design"):
             deadline_date = datetime.strptime(tournament_data["deadline"], "%Y-%m-%d %H:%M:%S")
             tournament_data["judging_date"] = (deadline_date + timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
         except:
-            tournament_data["judging_date"] = default_tournament.get("judging_date", (datetime.now() + timedelta(days=26)).strftime("%Y-%m-%d %H:%M:%S"))
+            tournament_data["judging_date"] = default_tournament.get("judging_date", (datetime.now() + timedelta(days=23)).strftime("%Y-%m-%d %H:%M:%S"))
     
     return tournament_data
 
@@ -508,7 +520,7 @@ def generate_creative_web_topics(count=3):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a creative director specializing in web design competitions that challenge students to create original and innovative designs."},
+                {"role": "system", "content": f"You are a creative director specializing in web design competitions that challenge students to create original and innovative designs."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=1500,
@@ -594,8 +606,10 @@ def generate_web_design_tournament():
         "focus": "User experience and visual design"
     }
     
+    # Tournament date: 1 month from today
     tournament_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
-    submission_deadline = (datetime.now() + timedelta(days=25)).strftime("%Y-%m-%d %H:%M:%S")
+    # Submission deadline: 1 week before tournament
+    submission_deadline = (datetime.now() + timedelta(days=23)).strftime("%Y-%m-%d %H:%M:%S")
     
     return {
         "title": topic["title"],

@@ -46,6 +46,12 @@ def parse_team_size(team_size_value):
     # Default value if parsing fails
     return 2
 
+def get_malaysia_time():
+    """Get current time in Malaysia (UTC+8)"""
+    from datetime import timezone
+    malaysia_tz = timezone(timedelta(hours=8))
+    return datetime.now(malaysia_tz)
+
 def update_judging_criteria_from_rubrics():
     """Update judging criteria in tournament_data based on current rubrics"""
     if 'rubrics' in st.session_state and st.session_state.rubrics:
@@ -307,48 +313,29 @@ def display_tournament_page():
                 elif field == 'tournament_project_submission':
                     st.session_state[field] = tournament_data.get("project_submission", "")
         
-        # Initialize date/time fields in session state if not present
+        # Initialize date/time fields with Malaysia time (UTC+8)
+        malaysia_now = get_malaysia_time()
+        
         if 'tournament_date' not in st.session_state:
-            date_default = datetime.now() + timedelta(days=30)
-            date_str = tournament_data.get("date_time", date_default.strftime("%Y-%m-%d %H:%M:%S"))
-            try:
-                if isinstance(date_str, str):
-                    date_obj = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
-                else:
-                    date_obj = date_default
-            except:
-                date_obj = date_default
-            st.session_state['tournament_date'] = date_obj.date()
+            # Tournament date: 1 month from today (Malaysia time)
+            tournament_date_default = malaysia_now + timedelta(days=30)
+            st.session_state['tournament_date'] = tournament_date_default.date()
         
         if 'tournament_time' not in st.session_state:
             st.session_state['tournament_time'] = datetime.strptime("14:00:00", "%H:%M:%S").time()
         
         if 'tournament_deadline_date' not in st.session_state:
-            deadline_default = datetime.now() + timedelta(days=25)
-            deadline_str = tournament_data.get("deadline", deadline_default.strftime("%Y-%m-%d %H:%M:%S"))
-            try:
-                if isinstance(deadline_str, str):
-                    deadline_obj = datetime.strptime(deadline_str, "%Y-%m-%d %H:%M:%S")
-                else:
-                    deadline_obj = deadline_default
-            except:
-                deadline_obj = deadline_default
-            st.session_state['tournament_deadline_date'] = deadline_obj.date()
+            # Submission deadline: 1 week before tournament (Malaysia time)
+            deadline_date_default = malaysia_now + timedelta(days=23)
+            st.session_state['tournament_deadline_date'] = deadline_date_default.date()
         
         if 'tournament_deadline_time' not in st.session_state:
             st.session_state['tournament_deadline_time'] = datetime.strptime("23:59:59", "%H:%M:%S").time()
         
         if 'tournament_judging_date' not in st.session_state:
-            judging_default = datetime.now() + timedelta(days=26)
-            judging_date_str = tournament_data.get("judging_date", judging_default.strftime("%Y-%m-%d %H:%M:%S"))
-            try:
-                if isinstance(judging_date_str, str):
-                    judging_date_obj = datetime.strptime(judging_date_str, "%Y-%m-%d %H:%M:%S")
-                else:
-                    judging_date_obj = judging_default
-            except:
-                judging_date_obj = judging_default
-            st.session_state['tournament_judging_date'] = judging_date_obj.date()
+            # Judging date: 1 week before tournament (Malaysia time)  
+            judging_date_default = malaysia_now + timedelta(days=23)
+            st.session_state['tournament_judging_date'] = judging_date_default.date()
         
         if 'tournament_judging_time' not in st.session_state:
             st.session_state['tournament_judging_time'] = datetime.strptime("10:00:00", "%H:%M:%S").time()
